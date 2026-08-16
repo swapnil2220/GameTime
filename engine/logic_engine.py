@@ -116,22 +116,37 @@ class LogicEngine:
 
     @staticmethod
     def _generate_analogy(level_number, difficulty):
-        outer = random.choice(['Circle', 'Square', 'Triangle', 'Pentagon'])
-        inner = random.choice(['Star', 'Diamond', 'Cross', 'Dot'])
-        color1, color2 = LogicEngine.COLORS[0], LogicEngine.COLORS[1]
+        outers = ['circle', 'square', 'triangle', 'pentagon']
+        inners = ['star', 'diamond', 'cross', 'dot']
         
-        target_outer = random.choice(['Hexagon', 'Circle', 'Square'])
-        target_inner = inner
-        
-        correct_desc = f"Big {target_outer} with Inner {target_inner}"
+        c1, c2 = LogicEngine.COLORS[0], LogicEngine.COLORS[1]
+        c3, c4 = LogicEngine.COLORS[2], LogicEngine.COLORS[3]
+
+        shapeA = {
+            "outerShape": outers[0], "innerShape": inners[0],
+            "outerColor": c1, "innerColor": c2, "rotation": 0
+        }
+        shapeB = {
+            "outerShape": outers[0], "innerShape": inners[0],
+            "outerColor": c2, "innerColor": c1, "rotation": 0
+        }
+        shapeC = {
+            "outerShape": outers[1], "innerShape": inners[1],
+            "outerColor": c3, "innerColor": c4, "rotation": 0
+        }
+        shapeD = {
+            "outerShape": outers[1], "innerShape": inners[1],
+            "outerColor": c4, "innerColor": c3, "rotation": 0
+        }
+
         options = [
-            {"id": "opt_c", "content": correct_desc, "is_correct": True},
-            {"id": "opt_w1", "content": f"Big {target_outer} with Inner Dot", "is_correct": False},
-            {"id": "opt_w2", "content": f"Small {target_outer} with Inner Star", "is_correct": False},
-            {"id": "opt_w3", "content": f"Rotated {target_outer} with Cross", "is_correct": False},
+            {"id": "opt_c", "content": shapeD, "is_correct": True},
+            {"id": "opt_w1", "content": {**shapeC, "outerColor": "#ef4444"}, "is_correct": False},
+            {"id": "opt_w2", "content": {**shapeD, "rotation": 90}, "is_correct": False},
+            {"id": "opt_w3", "content": {**shapeD, "innerShape": "cross"}, "is_correct": False},
         ]
         random.shuffle(options)
-        
+
         return {
             "id": f"analogy_{level_number}",
             "category": "analogy",
@@ -139,13 +154,13 @@ class LogicEngine:
             "difficulty": difficulty,
             "level_number": level_number,
             "data": {
-                "shapeA": f"Outer {outer} ({color1}) + Inner {inner} ({color2})",
-                "shapeB": f"Outer {inner} ({color2}) + Inner {outer} ({color1})",
-                "shapeC": f"Outer {target_inner} ({color1}) + Inner {target_outer} ({color2})",
+                "shapeA": shapeA,
+                "shapeB": shapeB,
+                "shapeC": shapeC,
             },
             "options": options,
-            "explanation": "Rule: Shape A swaps outer and inner geometries to form Shape B. Applying this rule to Shape C produces Shape D.",
-            "hint": "Observe how inner and outer shapes invert positions from A to B."
+            "explanation": "Rule: Shape A swaps outer and inner colors to form Shape B. Applying this exact rule to Shape C produces Shape D.",
+            "hint": "Observe how outer border color and inner fill color invert from A to B."
         }
 
     @staticmethod
@@ -193,7 +208,6 @@ class LogicEngine:
             {"id": "opt_w2", "content": "Overlapping Circles (Intersection)", "is_correct": False},
             {"id": "opt_w3", "content": "Concentric Circles (Subsets)", "is_correct": False},
         ]
-        # ensure unique single correct
         for opt in options:
             if opt["id"] != "opt_c":
                 opt["is_correct"] = False

@@ -85,6 +85,15 @@ if "selected_option" not in st.session_state:
 
 active_profile = st.session_state.profiles[st.session_state.active_profile_id]
 
+# Helper to format option content for Streamlit buttons
+def format_opt_content(content):
+    if isinstance(content, dict):
+        outer = content.get("outerShape", "Circle").capitalize()
+        inner = content.get("innerShape", "Dot").capitalize()
+        rot = f" (Rotated {content['rotation']}°)" if content.get("rotation") else ""
+        return f"Outer {outer} + Inner {inner}{rot}"
+    return str(content)
+
 # Sidebar - User Session & Navigation
 with st.sidebar:
     st.title("⚡ Logic Link")
@@ -211,10 +220,13 @@ elif st.session_state.view_state == "playing":
         
         if puzzle["category"] == "analogy":
             col1, col2, col3, col4 = st.columns(4)
-            col1.info(f"**Shape A:**\n\n{puzzle['data']['shapeA']}")
-            col2.success(f"**Shape B:**\n\n{puzzle['data']['shapeB']}")
-            col3.warning(f"**Shape C:**\n\n{puzzle['data']['shapeC']}")
-            col4.error("**Shape D:**\n\n❓")
+            shA = format_opt_content(puzzle['data']['shapeA'])
+            shB = format_opt_content(puzzle['data']['shapeB'])
+            shC = format_opt_content(puzzle['data']['shapeC'])
+            col1.info(f"**SHAPE A:**\n\n{shA}")
+            col2.success(f"**SHAPE B:**\n\n{shB}")
+            col3.warning(f"**SHAPE C:**\n\n{shC}")
+            col4.error("**SHAPE D:**\n\n❓")
         elif puzzle["category"] == "cipher":
             st.info(f"**Example Cipher Pair:** {puzzle['data']['w1']} ➔ {puzzle['data']['c1']}")
             st.subheader(f"Decode Target: **{puzzle['data']['w2']}** ➔ **?**")
@@ -247,7 +259,8 @@ elif st.session_state.view_state == "playing":
     opt_cols = st.columns(2)
     for idx, opt in enumerate(puzzle["options"]):
         with opt_cols[idx % 2]:
-            if st.button(f"{idx+1}. {opt['content']}", key=f"opt_btn_{opt['id']}", use_container_width=True):
+            display_text = format_opt_content(opt['content'])
+            if st.button(f"{idx+1}. {display_text}", key=f"opt_btn_{opt['id']}", use_container_width=True):
                 st.session_state.selected_option = opt["id"]
                 time_spent = max(1, int(time.time() - st.session_state.puzzle_start_time))
                 
