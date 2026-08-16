@@ -1,133 +1,126 @@
 import type { AptitudePuzzle, Option, DifficultyTier } from '../../types/game';
 import { SeededRandom } from '../seed';
 
-export interface GeoQuestion {
-  country: string;
+export interface CountryMapData {
+  name: string;
   capital: string;
+  landmark: string;
   continent: string;
-  flagEmoji: string;
-  svgPathD: string; // SVG path outline for map
+  triviaFact: string;
+  svgShapeKey: 'japan' | 'italy' | 'brazil' | 'india' | 'australia' | 'france';
 }
 
-const GEO_DATABASE: GeoQuestion[] = [
+const COUNTRIES: CountryMapData[] = [
   {
-    country: 'Japan',
+    name: 'Japan',
     capital: 'Tokyo',
+    landmark: 'Mount Fuji',
     continent: 'Asia',
-    flagEmoji: '🇯🇵',
-    svgPathD: 'M 30,20 Q 40,10 60,25 Q 70,40 50,60 Q 30,70 20,50 Z',
+    triviaFact: 'Tokyo is the most populous metropolitan area in the world with over 37 million residents!',
+    svgShapeKey: 'japan',
   },
   {
-    country: 'Italy',
+    name: 'Italy',
     capital: 'Rome',
+    landmark: 'Colosseum',
     continent: 'Europe',
-    flagEmoji: '🇮🇹',
-    svgPathD: 'M 20,10 L 40,20 L 50,50 L 60,70 L 40,65 L 30,45 Z', // boot silhouette
+    triviaFact: 'Italy has more UNESCO World Heritage sites than any other country in the world!',
+    svgShapeKey: 'italy',
   },
   {
-    country: 'France',
-    capital: 'Paris',
-    continent: 'Europe',
-    flagEmoji: '🇫🇷',
-    svgPathD: 'M 30,10 L 60,10 L 70,40 L 50,70 L 20,50 Z', // hexagon shape
-  },
-  {
-    country: 'Brazil',
+    name: 'Brazil',
     capital: 'Brasília',
+    landmark: 'Christ the Redeemer',
     continent: 'South America',
-    flagEmoji: '🇧🇷',
-    svgPathD: 'M 20,20 L 70,15 L 60,65 L 30,70 L 15,40 Z',
+    triviaFact: 'The Amazon Rainforest produces over 20% of the world’s oxygen!',
+    svgShapeKey: 'brazil',
   },
   {
-    country: 'Egypt',
-    capital: 'Cairo',
-    continent: 'Africa',
-    flagEmoji: '🇪🇬',
-    svgPathD: 'M 15,15 L 75,15 L 75,65 L 15,65 Z', // quad
-  },
-  {
-    country: 'Australia',
-    capital: 'Canberra',
-    continent: 'Oceania',
-    flagEmoji: '🇦🇺',
-    svgPathD: 'M 15,30 Q 30,10 70,20 Q 80,50 60,70 Q 20,70 15,30 Z',
-  },
-  {
-    country: 'Canada',
-    capital: 'Ottawa',
-    continent: 'North America',
-    flagEmoji: '🇨🇦',
-    svgPathD: 'M 10,20 L 80,15 L 75,60 L 15,60 Z',
-  },
-  {
-    country: 'India',
+    name: 'India',
     capital: 'New Delhi',
+    landmark: 'Taj Mahal',
     continent: 'Asia',
-    flagEmoji: '🇮🇳',
-    svgPathD: 'M 20,10 L 70,10 L 45,75 Z', // triangular peninsula outline
+    triviaFact: 'India is home to the world’s highest cricket ground at 2,444 meters above sea level in Chail!',
+    svgShapeKey: 'india',
+  },
+  {
+    name: 'Australia',
+    capital: 'Canberra',
+    landmark: 'Sydney Opera House',
+    continent: 'Oceania',
+    triviaFact: 'Australia is the only continent covered by a single country and is wider than the Moon!',
+    svgShapeKey: 'australia',
+  },
+  {
+    name: 'France',
+    capital: 'Paris',
+    landmark: 'Eiffel Tower',
+    continent: 'Europe',
+    triviaFact: 'France is the most visited country in the world with nearly 90 million tourists annually!',
+    svgShapeKey: 'france',
   },
 ];
 
 export function generateGeographyPuzzle(difficulty: DifficultyTier, rng: SeededRandom): AptitudePuzzle {
-  const target = rng.pick(GEO_DATABASE);
+  const country = rng.pick(COUNTRIES);
+  const questionType = rng.pick(['capital', 'map_identify', 'landmark']);
 
-  // Question Type: Capital OR Country Map Identification
-  const qType = rng.pick(['capital', 'map']);
+  let questionText = '';
+  let correctContent = '';
+  let distractorPool: string[] = [];
+  let hint = '';
 
-  if (qType === 'capital') {
-    const distractors = rng
-      .shuffle(GEO_DATABASE.filter((g) => g.country !== target.country))
-      .slice(0, 3)
-      .map((g) => g.capital);
-
-    const options: Option[] = [
-      { id: 'opt_c', content: target.capital, isCorrect: true },
-      ...distractors.map((d, i) => ({ id: `opt_d_${i}`, content: d, isCorrect: false })),
-    ];
-
-    return {
-      id: `geo_${Date.now()}_${rng.range(100, 999)}`,
-      category: 'geography',
-      categoryTitle: 'World Geography & Capitals',
-      difficulty,
-      levelNumber: 17,
-      renderedData: {
-        type: 'capital',
-        country: target.country,
-        flagEmoji: target.flagEmoji,
-        continent: target.continent,
-      },
-      options: rng.shuffle(options),
-      explanation: `The capital of ${target.country} ${target.flagEmoji} is ${target.capital}.`,
-      visualHint: `Think of key landmarks in ${target.country} (${target.continent}).`,
-    };
+  if (questionType === 'capital') {
+    questionText = `What is the capital city of ${country.name}?`;
+    correctContent = country.capital;
+    distractorPool = Array.from(new Set(COUNTRIES.map((c) => c.capital).filter((cap) => cap !== country.capital)));
+    hint = `This famous capital city is situated in ${country.continent}.`;
+  } else if (questionType === 'map_identify') {
+    questionText = `Which country does this map outline represent?`;
+    correctContent = country.name;
+    distractorPool = Array.from(new Set(COUNTRIES.map((c) => c.name).filter((n) => n !== country.name)));
+    hint = `The capital of this country is ${country.capital}.`;
   } else {
-    // Map silhouette identification
-    const distractors = rng
-      .shuffle(GEO_DATABASE.filter((g) => g.country !== target.country))
-      .slice(0, 3)
-      .map((g) => g.country);
-
-    const options: Option[] = [
-      { id: 'opt_c', content: target.country, isCorrect: true },
-      ...distractors.map((d, i) => ({ id: `opt_d_${i}`, content: d, isCorrect: false })),
-    ];
-
-    return {
-      id: `geo_map_${Date.now()}_${rng.range(100, 999)}`,
-      category: 'geography',
-      categoryTitle: 'Country Map Identification',
-      difficulty,
-      levelNumber: 18,
-      renderedData: {
-        type: 'map',
-        svgPathD: target.svgPathD,
-        flagEmoji: target.flagEmoji,
-        continent: target.continent,
-      },
-      options: rng.shuffle(options),
-      explanation: `This map silhouette outline represents ${target.country} ${target.flagEmoji}.`,
-      visualHint: `Notice the coastline / border geometry located in ${target.continent}.`,
-    };
+    questionText = `The landmark ${country.landmark} is located in which country?`;
+    correctContent = country.name;
+    distractorPool = Array.from(new Set(COUNTRIES.map((c) => c.name).filter((n) => n !== country.name)));
+    hint = `This landmark is located in ${country.continent}.`;
   }
+
+  // Pick unique 3 distractors
+  const chosenDistractors = rng.shuffle(distractorPool).slice(0, 3);
+
+  const options: Option[] = [];
+  options.push({ id: 'opt_correct', content: correctContent, isCorrect: true });
+  chosenDistractors.forEach((d, i) => {
+    options.push({ id: `opt_d_${i}`, content: d, isCorrect: false });
+  });
+
+  // Guarantee distinct options using Set check
+  const uniqueOptions: Option[] = [];
+  const seenContent = new Set<string>();
+
+  for (const opt of rng.shuffle(options)) {
+    const key = String(opt.content);
+    if (!seenContent.has(key)) {
+      seenContent.add(key);
+      uniqueOptions.push(opt);
+    }
+  }
+
+  return {
+    id: `geo_${Date.now()}_${rng.range(100, 999)}`,
+    category: 'geography',
+    categoryTitle: 'Geography & World Maps',
+    difficulty,
+    levelNumber: 1,
+    renderedData: {
+      country,
+      questionType,
+      questionText,
+    },
+    options: uniqueOptions,
+    explanation: `${country.name}'s capital is ${country.capital}, famous for ${country.landmark}. 💡 DID YOU KNOW? ${country.triviaFact}`,
+    visualHint: hint,
+  };
 }

@@ -1,102 +1,102 @@
-import { useState } from 'react';
-import type { ViewState, UserProfile } from './types/game';
-import { getActiveProfile, saveProfile } from './engine/profileManager';
+import { useState, useEffect } from 'react';
+import type { ViewState, UserProfile, ConnectionsPuzzle } from './types/game';
+import { getActiveUser, updateUserLevelProgress } from './engine/userManager';
+import { generateAIConnectionsPuzzle } from './engine/aiEngine';
 import { Navbar } from './components/Navbar';
-import { ProfileModal } from './components/ProfileModal';
-import { HowToPlayModal } from './components/HowToPlayModal';
 import { BackgroundCanvas } from './components/BackgroundCanvas';
 import { LevelSelect } from './components/LevelSelect';
+import { ConnectionsGrid } from './components/ConnectionsGrid';
 import { PuzzleRunner } from './components/PuzzleRunner';
 import { ResultModal } from './components/ResultModal';
 import { Leaderboard } from './components/Leaderboard';
-import { sound } from './engine/sound';
+import { HowToPlayModal } from './components/HowToPlayModal';
+import { UserAuthModal } from './components/UserAuthModal';
+import { AIStudioModal } from './components/AIStudioModal';
+import { ShareScoreModal } from './components/ShareScoreModal';
 
 export function App() {
   const [viewState, setViewState] = useState<ViewState>('level_select');
-  const [activeProfile, setActiveProfile] = useState<UserProfile>(() => getActiveProfile());
+  const [activeUser, setActiveUser] = useState<UserProfile>(() => getActiveUser());
   const [activeLevelNumber, setActiveLevelNumber] = useState<number>(1);
   const [audioEnabled, setAudioEnabled] = useState(true);
-  
-  // Modals state
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isHowToPlayOpen, setIsHowToPlayOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isAIStudioOpen, setIsAIStudioOpen] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
 
-  const [lastResult, setLastResult] = useState<{ stars: number; score: number; timeSec: number } | null>(null);
+  const [activeConnectionsPuzzle, setActiveConnectionsPuzzle] = useState<ConnectionsPuzzle | null>(null);
+  const [lastResult, setLastResult] = useState<{ stars: number; score: number; timeSec: number; emojiGrid?: string } | null>(null);
+
+  useEffect(() => {
+    setActiveUser(getActiveUser());
+  }, []);
 
   const handleSelectLevel = (lvlNum: number) => {
-    sound.playClick();
     setActiveLevelNumber(lvlNum);
     setViewState('playing');
   };
 
+  const handleStartDailyAI = () => {
+    const puzzle = generateAIConnectionsPuzzle();
+    setActiveConnectionsPuzzle(puzzle);
+    setViewState('connections_playing');
+  };
+
+  const handleGenerateTopicPuzzle = (topicPrompt: string) => {
+    const puzzle = generateAIConnectionsPuzzle(topicPrompt);
+    setActiveConnectionsPuzzle(puzzle);
+    setViewState('connections_playing');
+  };
+
+  const handleCompleteConnections = (score: number, stars: number, emojiGrid: string) => {
+    setLastResult({ stars, score, timeSec: 45, emojiGrid });
+    const updatedUser = updateUserLevelProgress(activeUser.id, activeLevelNumber, stars, score, 45);
+    setActiveUser(updatedUser);
+    setViewState('result');
+  };
+
   const handleCompleteLevel = (stars: number, score: number, timeSec: number) => {
     setLastResult({ stars, score, timeSec });
-
-    // Update active profile levels
-    const updatedLevels = activeProfile.levels.map((lvl) => {
-      if (lvl.levelNumber === activeLevelNumber) {
-        return {
-          ...lvl,
-          completed: true,
-          stars: Math.max(lvl.stars, stars),
-          bestScore: Math.max(lvl.bestScore, score),
-          bestTimeSec: lvl.bestTimeSec ? Math.min(lvl.bestTimeSec, timeSec) : timeSec,
-        };
-      }
-      if (lvl.levelNumber === activeLevelNumber + 1 && stars > 0) {
-        return { ...lvl, unlocked: true };
-      }
-      return lvl;
-    });
-
-    const totalStars = updatedLevels.reduce((acc, l) => acc + l.stars, 0);
-    const totalScore = updatedLevels.reduce((acc, l) => acc + l.bestScore, 0);
-
-    const updatedProfile: UserProfile = {
-      ...activeProfile,
-      totalStars,
-      totalScore,
-      levels: updatedLevels,
-    };
-
-    setActiveProfile(updatedProfile);
-    saveProfile(updatedProfile);
+    const updatedUser = updateUserLevelProgress(activeUser.id, activeLevelNumber, stars, score, timeSec);
+    setActiveUser(updatedUser);
     setViewState('result');
   };
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col relative font-sans selection:bg-cyan-500 selection:text-black">
-      {/* Background Particle Canvas */}
+      {/* Background Canvas */}
       <BackgroundCanvas overdrive={false} />
 
       {/* Navigation Header */}
       <Navbar
-        activeProfile={activeProfile}
-        onOpenProfile={() => setIsProfileOpen(true)}
+        activeUser={activeUser}
+        onNavigate={(v) => setViewState(v)}
         onOpenHowToPlay={() => setIsHowToPlayOpen(true)}
-        onOpenLeaderboard={() => setViewState('leaderboard')}
-        onNavigateHome={() => setViewState('level_select')}
+        onOpenAIStudio={() => setIsAIStudioOpen(true)}
+        onOpenAuth={() => setIsAuthOpen(true)}
         audioEnabled={audioEnabled}
         onAudioToggle={setAudioEnabled}
       />
 
-      {/* Modals */}
-      <ProfileModal
-        isOpen={isProfileOpen}
-        onClose={() => setIsProfileOpen(false)}
-        activeProfile={activeProfile}
-        onProfileChanged={(p) => setActiveProfile(p)}
-      />
-
-      <HowToPlayModal
-        isOpen={isHowToPlayOpen}
-        onClose={() => setIsHowToPlayOpen(false)}
-      />
-
-      {/* Main View Router */}
+      {/* Main App Router */}
       <main className="flex-1 flex flex-col justify-center items-center relative z-10 py-6">
         {viewState === 'level_select' && (
-          <LevelSelect levels={activeProfile.levels} onSelectLevel={handleSelectLevel} />
+          <LevelSelect
+            activeUser={activeUser}
+            levels={activeUser.levelProgress}
+            onSelectLevel={handleSelectLevel}
+            onStartDailyAIChallenge={handleStartDailyAI}
+            onOpenAIStudio={() => setIsAIStudioOpen(true)}
+            onOpenHowToPlay={() => setIsHowToPlayOpen(true)}
+          />
+        )}
+
+        {viewState === 'connections_playing' && activeConnectionsPuzzle && (
+          <ConnectionsGrid
+            puzzle={activeConnectionsPuzzle}
+            onComplete={handleCompleteConnections}
+            onBackToMap={() => setViewState('level_select')}
+          />
         )}
 
         {viewState === 'playing' && (
@@ -108,28 +108,62 @@ export function App() {
         )}
 
         {viewState === 'result' && lastResult && (
-          <ResultModal
-            stars={lastResult.stars}
-            score={lastResult.score}
-            timeSec={lastResult.timeSec}
-            levelNumber={activeLevelNumber}
-            onNextLevel={() => {
-              setActiveLevelNumber((prev) => Math.min(32, prev + 1));
-              setViewState('playing');
-            }}
-            onRetryLevel={() => setViewState('playing')}
-            onBackToMap={() => setViewState('level_select')}
-          />
+          <div className="flex flex-col items-center">
+            <ResultModal
+              stars={lastResult.stars}
+              score={lastResult.score}
+              timeSec={lastResult.timeSec}
+              levelNumber={activeLevelNumber}
+              onNextLevel={() => {
+                setActiveLevelNumber((prev) => Math.min(30, prev + 1));
+                setViewState('playing');
+              }}
+              onRetryLevel={() => setViewState('playing')}
+              onBackToMap={() => setViewState('level_select')}
+            />
+
+            {lastResult.emojiGrid && (
+              <button
+                onClick={() => setIsShareOpen(true)}
+                className="mt-4 px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-600 to-purple-600 font-mono font-extrabold text-black text-xs shadow-[0_0_20px_rgba(245,158,11,0.4)] hover:scale-105 transition-all"
+              >
+                📋 SHARE EMOJI SCORECARD WITH FRIENDS
+              </button>
+            )}
+          </div>
         )}
 
         {viewState === 'leaderboard' && (
-          <Leaderboard onBackToMap={() => setViewState('level_select')} />
+          <Leaderboard onBackToMenu={() => setViewState('level_select')} />
         )}
       </main>
 
+      {/* Modals */}
+      <HowToPlayModal isOpen={isHowToPlayOpen} onClose={() => setIsHowToPlayOpen(false)} />
+      <AIStudioModal
+        isOpen={isAIStudioOpen}
+        onClose={() => setIsAIStudioOpen(false)}
+        onGenerateTopicPuzzle={handleGenerateTopicPuzzle}
+      />
+      <UserAuthModal
+        isOpen={isAuthOpen}
+        activeUser={activeUser}
+        onClose={() => setIsAuthOpen(false)}
+        onUserChanged={(newUser) => setActiveUser(newUser)}
+      />
+      {lastResult && lastResult.emojiGrid && (
+        <ShareScoreModal
+          isOpen={isShareOpen}
+          score={lastResult.score}
+          stars={lastResult.stars}
+          emojiGrid={lastResult.emojiGrid}
+          onClose={() => setIsShareOpen(false)}
+        />
+      )}
+
       {/* Footer */}
       <footer className="w-full py-4 text-center text-xs font-mono text-slate-600 border-t border-slate-900 relative z-10">
-        LOGIC LINK: INVESTOR EDITION © 2026 • REASONING, GEOGRAPHY & TRIVIA SHOWCASE
+        LOGIC LINK: AI NEXUS V3 © 2026 • GENERATIVE AI COGNITIVE QUIZ
       </footer>
     </div>
   );

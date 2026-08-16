@@ -24,7 +24,6 @@ export function generateAnalogyPuzzle(difficulty: DifficultyTier, rng: SeededRan
     rotation: 0,
   };
 
-  // Rule: Swap outer & inner colors OR Swap outer & inner shapes OR rotate +90
   const ruleType = rng.pick(['swap_colors', 'swap_shapes', 'rotate']);
 
   let shapeB: AnalogyShape;
@@ -66,32 +65,40 @@ export function generateAnalogyPuzzle(difficulty: DifficultyTier, rng: SeededRan
     shapeD = { ...shapeC, rotation: 90 };
   }
 
-  // Distractors
+  // Distractors with distinct properties
   const options: Option[] = [];
   options.push({ id: 'opt_correct', content: shapeD, isCorrect: true });
 
-  // Wrong distractor 1 (unswapped colors)
   options.push({
     id: 'opt_d1',
-    content: { ...shapeC, outerColor: COLORS[5] },
+    content: { ...shapeC, outerColor: COLORS[5], innerColor: COLORS[0] },
     isCorrect: false,
   });
 
-  // Wrong distractor 2 (wrong rotation)
   options.push({
     id: 'opt_d2',
-    content: { ...shapeD, rotation: 180 },
+    content: { ...shapeD, rotation: 180, innerColor: COLORS[2] },
     isCorrect: false,
   });
 
-  // Wrong distractor 3 (wrong inner shape)
   options.push({
     id: 'opt_d3',
-    content: { ...shapeD, innerShape: shapeA.innerShape },
+    content: { ...shapeD, innerShape: shapeA.innerShape, outerColor: COLORS[1] },
     isCorrect: false,
   });
 
-  const shuffledOptions = rng.shuffle(options);
+  // Unique options filter
+  const uniqueOptions: Option[] = [];
+  const seenKeys = new Set<string>();
+
+  for (const opt of rng.shuffle(options)) {
+    const s = opt.content as AnalogyShape;
+    const key = `${s.outerShape}_${s.innerShape}_${s.outerColor}_${s.innerColor}_${s.rotation}`;
+    if (!seenKeys.has(key)) {
+      seenKeys.add(key);
+      uniqueOptions.push(opt);
+    }
+  }
 
   return {
     id: `analogy_${Date.now()}_${rng.range(100, 999)}`,
@@ -104,7 +111,7 @@ export function generateAnalogyPuzzle(difficulty: DifficultyTier, rng: SeededRan
       shapeB,
       shapeC,
     },
-    options: shuffledOptions,
+    options: uniqueOptions,
     explanation: `Shape A is to Shape B as Shape C is to Shape D. Rule: ${ruleDescription}`,
     visualHint: hintText,
   };

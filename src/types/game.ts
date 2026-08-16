@@ -1,13 +1,29 @@
 export type AptitudeCategory =
+  | 'connections'
+  | 'geography'
+  | 'sports'
   | 'analogy'
   | 'cipher'
   | 'venn'
   | 'series'
-  | 'geography'
-  | 'sports'
   | 'syllogism';
 
-export type DifficultyTier = 'beginner' | 'intermediate' | 'expert' | 'master';
+export type DifficultyTier = 'beginner' | 'intermediate' | 'expert';
+
+export interface ConnectionsGroup {
+  categoryTitle: string;
+  items: [string, string, string, string];
+  colorTier: 'yellow' | 'green' | 'blue' | 'purple'; // Yellow = Easy, Green = Medium, Blue = Tricky, Purple = Mind-Bending
+  explanation: string;
+}
+
+export interface ConnectionsPuzzle {
+  id: string;
+  title: string;
+  topicPrompt?: string;
+  groups: [ConnectionsGroup, ConnectionsGroup, ConnectionsGroup, ConnectionsGroup];
+  shuffledTiles: string[];
+}
 
 export interface Option {
   id: string;
@@ -38,12 +54,15 @@ export interface LevelProgress {
 
 export interface UserProfile {
   id: string;
-  name: string;
+  username: string;
   avatar: string;
   isGuest: boolean;
   totalScore: number;
   totalStars: number;
-  levels: LevelProgress[];
+  dailyStreak: number;
+  lastPlayedDate: string;
+  levelProgress: LevelProgress[];
+  createdAt: string;
 }
 
-export type ViewState = 'level_select' | 'playing' | 'result' | 'leaderboard';
+export type ViewState = 'level_select' | 'playing' | 'connections_playing' | 'result' | 'leaderboard';

@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import type { AptitudePuzzle } from '../types/game';
 import { generateAptitudePuzzle } from '../engine/logicEngine';
+import { GeographyView } from './categoryViews/GeographyView';
+import { SportsView } from './categoryViews/SportsView';
 import { AnalogyShapeSVG } from './categoryViews/AnalogyView';
 import { CipherView } from './categoryViews/CipherView';
 import { VennView } from './categoryViews/VennView';
 import { SeriesView } from './categoryViews/SeriesView';
 import { SyllogismView } from './categoryViews/SyllogismView';
-import { GeographyView } from './categoryViews/GeographyView';
-import { SportsView } from './categoryViews/SportsView';
 import { sound } from '../engine/sound';
 import { Lightbulb, ChevronRight, CheckCircle2, XCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -73,6 +73,15 @@ export const PuzzleRunner: React.FC<PuzzleRunnerProps> = ({
 
   const renderCategoryBody = () => {
     switch (puzzle.category) {
+      case 'geography':
+        return (
+          <GeographyView
+            country={puzzle.renderedData.country}
+            questionText={puzzle.renderedData.questionText}
+          />
+        );
+      case 'sports':
+        return <SportsView data={puzzle.renderedData} />;
       case 'analogy': {
         const { shapeA, shapeB, shapeC } = puzzle.renderedData;
         return (
@@ -101,10 +110,6 @@ export const PuzzleRunner: React.FC<PuzzleRunnerProps> = ({
         return <SeriesView sequence={puzzle.renderedData.sequence} />;
       case 'syllogism':
         return <SyllogismView data={puzzle.renderedData} />;
-      case 'geography':
-        return <GeographyView data={puzzle.renderedData} />;
-      case 'sports':
-        return <SportsView data={puzzle.renderedData} />;
     }
   };
 

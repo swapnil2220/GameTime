@@ -12,7 +12,6 @@ export function generateCipherPuzzle(difficulty: DifficultyTier, rng: SeededRand
     word2 = WORDS_POOL.find(w => w.length === word1.length && w !== word1) || 'TEAM';
   }
 
-  // Cipher rule: +1 shift, +2 shift, or Reverse position
   const shift = difficulty === 'beginner' ? 1 : difficulty === 'intermediate' ? 2 : 3;
 
   const encodeWord = (str: string, shiftVal: number) => {
@@ -20,7 +19,7 @@ export function generateCipherPuzzle(difficulty: DifficultyTier, rng: SeededRand
       .split('')
       .map((ch) => {
         const code = ch.charCodeAt(0) - 65;
-        const newCode = (code + shiftVal) % 26;
+        const newCode = (code + shiftVal + 26) % 26;
         return String.fromCharCode(newCode + 65);
       })
       .join('');
@@ -29,29 +28,23 @@ export function generateCipherPuzzle(difficulty: DifficultyTier, rng: SeededRand
   const codedWord1 = encodeWord(word1, shift);
   const correctCodedWord2 = encodeWord(word2, shift);
 
-  // Distractors
+  const rawOptions: Option[] = [
+    { id: 'opt_correct', content: correctCodedWord2, isCorrect: true },
+    { id: 'opt_d1', content: encodeWord(word2, shift + 1), isCorrect: false },
+    { id: 'opt_d2', content: encodeWord(word2, shift - 1), isCorrect: false },
+    { id: 'opt_d3', content: encodeWord(word2, shift + 2), isCorrect: false },
+  ];
+
+  // Deduplicate options strictly
   const options: Option[] = [];
-  options.push({ id: 'opt_correct', content: correctCodedWord2, isCorrect: true });
+  const seen = new Set<string>();
 
-  options.push({
-    id: 'opt_d1',
-    content: encodeWord(word2, shift + 1),
-    isCorrect: false,
-  });
-
-  options.push({
-    id: 'opt_d2',
-    content: encodeWord(word2, Math.max(1, shift - 1)),
-    isCorrect: false,
-  });
-
-  options.push({
-    id: 'opt_d3',
-    content: word2.split('').reverse().join(''),
-    isCorrect: false,
-  });
-
-  const shuffledOptions = rng.shuffle(options);
+  for (const opt of rng.shuffle(rawOptions)) {
+    if (!seen.has(opt.content)) {
+      seen.add(opt.content);
+      options.push(opt);
+    }
+  }
 
   return {
     id: `cipher_${Date.now()}_${rng.range(100, 999)}`,
@@ -65,7 +58,7 @@ export function generateCipherPuzzle(difficulty: DifficultyTier, rng: SeededRand
       targetWord: word2,
       shiftAmount: shift,
     },
-    options: shuffledOptions,
+    options,
     explanation: `Each letter is shifted forward by ${shift} position(s) in the alphabet (${word1} → ${codedWord1}). Therefore, ${word2} becomes ${correctCodedWord2}.`,
     visualHint: `Compare letter by letter: '${word1[0]}' shifted by +${shift} becomes '${codedWord1[0]}'.`,
   };
