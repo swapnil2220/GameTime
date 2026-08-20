@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { UserProfile } from '../types/game';
-import { AVATARS, getAllUsers, switchOrRegisterUser } from '../engine/userManager';
-import { X, UserCheck, UserPlus } from 'lucide-react';
+import { AVATARS, getAllUsers, switchOrRegisterUser, resetUserProgress, deleteUserAccount } from '../engine/userManager';
+import { X, UserCheck, UserPlus, RotateCcw, Trash2 } from 'lucide-react';
 
 interface UserAuthModalProps {
   isOpen: boolean;
@@ -18,6 +18,7 @@ export const UserAuthModal: React.FC<UserAuthModalProps> = ({
 }) => {
   const [usernameInput, setUsernameInput] = useState('');
   const [selectedAvatar, setSelectedAvatar] = useState(AVATARS[0]);
+  const [confirmReset, setConfirmReset] = useState(false);
 
   if (!isOpen) return null;
 
@@ -36,6 +37,25 @@ export const UserAuthModal: React.FC<UserAuthModalProps> = ({
     const updated = switchOrRegisterUser(user.username, user.avatar, user.isGuest);
     onUserChanged(updated);
     onClose();
+  };
+
+  const handleResetProgress = () => {
+    if (!confirmReset) {
+      setConfirmReset(true);
+      return;
+    }
+    const resetUser = resetUserProgress(activeUser.id);
+    onUserChanged(resetUser);
+    setConfirmReset(false);
+    onClose();
+  };
+
+  const handleDeleteAccount = () => {
+    if (window.confirm(`Are you sure you want to delete profile "${activeUser.username}"?`)) {
+      const nextUser = deleteUserAccount(activeUser.id);
+      onUserChanged(nextUser);
+      onClose();
+    }
   };
 
   return (
@@ -92,6 +112,26 @@ export const UserAuthModal: React.FC<UserAuthModalProps> = ({
             </div>
           </div>
         )}
+
+        {/* Account Controls */}
+        <div className="mb-6 flex gap-2">
+          <button
+            onClick={handleResetProgress}
+            className="flex-1 py-2.5 rounded-xl bg-amber-950/60 border border-amber-500/40 font-mono text-xs text-amber-300 font-bold hover:bg-amber-900 transition-all flex items-center justify-center gap-1.5"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            {confirmReset ? 'CONFIRM RESET?' : 'RESET PROGRESS'}
+          </button>
+
+          {!activeUser.isGuest && (
+            <button
+              onClick={handleDeleteAccount}
+              className="py-2.5 px-4 rounded-xl bg-rose-950/60 border border-rose-500/40 font-mono text-xs text-rose-300 font-bold hover:bg-rose-900 transition-all flex items-center justify-center gap-1.5"
+            >
+              <Trash2 className="w-3.5 h-3.5" /> DELETE
+            </button>
+          )}
+        </div>
 
         {/* Register / Create New Profile Form */}
         <form onSubmit={handleCreateOrSwitch} className="flex flex-col gap-4">

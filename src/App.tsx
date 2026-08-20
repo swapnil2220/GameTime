@@ -42,8 +42,8 @@ export function App() {
     setViewState('connections_playing');
   };
 
-  const handleGenerateTopicPuzzle = (topicPrompt: string) => {
-    const puzzle = generateAIConnectionsPuzzle(topicPrompt);
+  const handleGenerateTopicPuzzle = (topicPrompt: string, livePuzzle?: ConnectionsPuzzle | null) => {
+    const puzzle = livePuzzle || generateAIConnectionsPuzzle(topicPrompt);
     setActiveConnectionsPuzzle(puzzle);
     setViewState('connections_playing');
   };

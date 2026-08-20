@@ -2,8 +2,21 @@ import type { UserProfile, LevelProgress } from '../types/game';
 
 const USERS_STORAGE_KEY = 'logic_link_users_v3';
 const ACTIVE_USER_KEY = 'logic_link_active_user_id';
+const CUSTOM_GEMINI_KEY = 'logic_link_custom_gemini_key';
 
 export const AVATARS = ['⚡', '🧠', '👑', '🚀', '🎯', '👾', '🔥', '🔮', '🏆', '💎'];
+
+export function getCustomGeminiKey(): string {
+  return localStorage.getItem(CUSTOM_GEMINI_KEY) || '';
+}
+
+export function saveCustomGeminiKey(key: string) {
+  if (!key.trim()) {
+    localStorage.removeItem(CUSTOM_GEMINI_KEY);
+  } else {
+    localStorage.setItem(CUSTOM_GEMINI_KEY, key.trim());
+  }
+}
 
 export function createDefaultLevels(): LevelProgress[] {
   return Array.from({ length: 30 }).map((_, i) => ({
@@ -20,15 +33,20 @@ export function getAllUsers(): UserProfile[] {
   const raw = localStorage.getItem(USERS_STORAGE_KEY);
   if (!raw) return [];
   try {
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
   } catch (e) {
-    console.error(e);
+    console.error('Failed to parse user storage:', e);
     return [];
   }
 }
 
 export function saveAllUsers(users: UserProfile[]) {
-  localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+  try {
+    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+  } catch (e) {
+    console.error('Failed to save users to localStorage:', e);
+  }
 }
 
 function getTodayString(): string {
@@ -44,7 +62,6 @@ export function getActiveUser(): UserProfile {
     if (found) return checkAndUpdateDailyStreak(found);
   }
 
-  // Create Guest if no user active
   const today = getTodayString();
   const guest: UserProfile = {
     id: `guest_${Math.floor(Math.random() * 9000 + 1000)}`,
@@ -90,15 +107,16 @@ export function checkAndUpdateDailyStreak(user: UserProfile): UserProfile {
   return user;
 }
 
-export function switchOrRegisterUser(username: string, avatar: string, isGuest: boolean = false): UserProfile {
+export function switchOrRegisterUser(usernameInput: string, avatar: string, isGuest: boolean = false): UserProfile {
   const users = getAllUsers();
   const today = getTodayString();
+  const cleanUsername = usernameInput.trim();
 
-  let existing = users.find((u) => u.username.toLowerCase() === username.toLowerCase());
+  let existing = users.find((u) => u.username.trim().toLowerCase() === cleanUsername.toLowerCase());
   if (!existing) {
     existing = {
       id: `user_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
-      username,
+      username: cleanUsername,
       avatar,
       isGuest,
       totalScore: 0,
@@ -116,6 +134,27 @@ export function switchOrRegisterUser(username: string, avatar: string, isGuest: 
   saveAllUsers(users);
   localStorage.setItem(ACTIVE_USER_KEY, existing.id);
   return checkAndUpdateDailyStreak(existing);
+}
+
+export function resetUserProgress(userId: string): UserProfile {
+  const users = getAllUsers();
+  const user = users.find((u) => u.id === userId);
+  if (user) {
+    user.levelProgress = createDefaultLevels();
+    user.totalScore = 0;
+    user.totalStars = 0;
+    saveAllUsers(users);
+    return user;
+  }
+  return getActiveUser();
+}
+
+export function deleteUserAccount(userId: string): UserProfile {
+  let users = getAllUsers();
+  users = users.filter((u) => u.id !== userId);
+  saveAllUsers(users);
+  localStorage.removeItem(ACTIVE_USER_KEY);
+  return getActiveUser();
 }
 
 export function updateUserLevelProgress(
