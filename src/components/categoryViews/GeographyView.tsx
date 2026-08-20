@@ -64,11 +64,148 @@ export const GeographyView: React.FC<GeographyViewProps> = ({ country, questionT
             strokeWidth="3"
           />
         );
+      case 'canada':
+        return (
+          <path
+            d="M 20,40 Q 90,10 160,30 Q 170,80 130,120 Q 70,140 30,90 Z"
+            fill="url(#geo-grad)"
+            stroke="#00f3ff"
+            strokeWidth="3"
+          />
+        );
+      case 'egypt':
+        return (
+          <polygon
+            points="40,30 140,30 140,130 40,130"
+            fill="url(#geo-grad)"
+            stroke="#00f3ff"
+            strokeWidth="3"
+          />
+        );
+      case 'germany':
+        return (
+          <polygon
+            points="70,20 120,30 130,80 110,130 50,120 40,70"
+            fill="url(#geo-grad)"
+            stroke="#00f3ff"
+            strokeWidth="3"
+          />
+        );
+      case 'spain':
+        return (
+          <polygon
+            points="50,30 130,25 140,100 100,140 40,120"
+            fill="url(#geo-grad)"
+            stroke="#00f3ff"
+            strokeWidth="3"
+          />
+        );
+      case 'argentina':
+        return (
+          <path
+            d="M 70,20 L 110,30 L 95,90 L 80,150 L 65,130 Z"
+            fill="url(#geo-grad)"
+            stroke="#00f3ff"
+            strokeWidth="3"
+          />
+        );
+      case 'mexico':
+        return (
+          <path
+            d="M 30,40 Q 100,30 150,80 Q 120,120 80,100 Z"
+            fill="url(#geo-grad)"
+            stroke="#00f3ff"
+            strokeWidth="3"
+          />
+        );
+      case 'south_korea':
+        return (
+          <path
+            d="M 70,30 C 90,20 110,40 100,70 C 90,100 70,120 60,90 Z"
+            fill="url(#geo-grad)"
+            stroke="#00f3ff"
+            strokeWidth="3"
+          />
+        );
+      case 'uk':
+        return (
+          <path
+            d="M 80,20 C 100,30 90,70 110,100 C 90,130 60,110 70,60 Z"
+            fill="url(#geo-grad)"
+            stroke="#00f3ff"
+            strokeWidth="3"
+          />
+        );
+      case 'greece':
+        return (
+          <polygon
+            points="60,30 110,35 120,80 90,120 50,90"
+            fill="url(#geo-grad)"
+            stroke="#00f3ff"
+            strokeWidth="3"
+          />
+        );
+      case 'kenya':
+        return (
+          <polygon
+            points="60,30 120,40 130,100 80,130 40,80"
+            fill="url(#geo-grad)"
+            stroke="#00f3ff"
+            strokeWidth="3"
+          />
+        );
+      case 'norway':
+        return (
+          <path
+            d="M 120,20 C 110,50 80,90 60,140 C 50,110 70,60 90,30 Z"
+            fill="url(#geo-grad)"
+            stroke="#00f3ff"
+            strokeWidth="3"
+          />
+        );
+      case 'thailand':
+        return (
+          <path
+            d="M 80,20 Q 120,30 110,80 L 80,150 L 70,90 Z"
+            fill="url(#geo-grad)"
+            stroke="#00f3ff"
+            strokeWidth="3"
+          />
+        );
+      case 'south_africa':
+        return (
+          <polygon
+            points="40,40 140,40 120,120 60,120"
+            fill="url(#geo-grad)"
+            stroke="#00f3ff"
+            strokeWidth="3"
+          />
+        );
+      case 'peru':
+        return (
+          <polygon
+            points="40,30 100,20 120,90 70,140 30,80"
+            fill="url(#geo-grad)"
+            stroke="#00f3ff"
+            strokeWidth="3"
+          />
+        );
+      default:
+        return (
+          <circle
+            cx="90"
+            cy="90"
+            r="60"
+            fill="url(#geo-grad)"
+            stroke="#00f3ff"
+            strokeWidth="3"
+          />
+        );
     }
   };
 
   return (
-    <div className="flex flex-col items-center gap-4 w-full max-w-lg my-4">
+    <div className="flex flex-col items-center gap-4 w-full max-w-lg my-4 font-sans">
       <div className="p-6 rounded-3xl bg-slate-900/80 border border-slate-700/80 backdrop-blur-xl w-full flex flex-col items-center shadow-xl">
         <div className="flex items-center gap-2 text-cyan-400 font-mono text-xs uppercase tracking-widest mb-3">
           <Globe className="w-4 h-4" /> GEOGRAPHY CHALLENGE

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { AptitudePuzzle } from '../types/game';
 import { generateAptitudePuzzle } from '../engine/logicEngine';
 import { GeographyView } from './categoryViews/GeographyView';
@@ -30,6 +30,8 @@ export const PuzzleRunner: React.FC<PuzzleRunnerProps> = ({
   const [startTime, setStartTime] = useState<number>(Date.now());
   const [elapsedSec, setElapsedSec] = useState(0);
 
+  const timeoutRef = useRef<any>(null);
+
   useEffect(() => {
     setPuzzle(generateAptitudePuzzle(levelNumber));
     setSelectedOptionId(null);
@@ -38,6 +40,10 @@ export const PuzzleRunner: React.FC<PuzzleRunnerProps> = ({
     const now = Date.now();
     setStartTime(now);
     setElapsedSec(0);
+
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
   }, [levelNumber]);
 
   useEffect(() => {
@@ -46,6 +52,11 @@ export const PuzzleRunner: React.FC<PuzzleRunnerProps> = ({
     }, 1000);
     return () => clearInterval(timer);
   }, [startTime]);
+
+  const handleBackToMap = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    onBackToMap();
+  };
 
   const handleOptionSelect = (optionId: string) => {
     if (selectedOptionId !== null) return;
@@ -76,7 +87,7 @@ export const PuzzleRunner: React.FC<PuzzleRunnerProps> = ({
 
     const score = isCorrect ? Math.max(100, 500 - timeSpent * 10) : 0;
 
-    setTimeout(() => {
+    timeoutRef.current = setTimeout(() => {
       onCompleteLevel(stars, score, timeSpent);
     }, 1800);
   };
@@ -128,7 +139,7 @@ export const PuzzleRunner: React.FC<PuzzleRunnerProps> = ({
       {/* Top Level Runner Header */}
       <div className="w-full flex items-center justify-between p-4 rounded-2xl bg-slate-950/80 border border-slate-800 backdrop-blur-xl shadow-xl mb-6">
         <button
-          onClick={onBackToMap}
+          onClick={handleBackToMap}
           className="flex items-center gap-1 text-xs font-mono text-cyan-400 hover:text-cyan-300"
         >
           ← STAGE MAP

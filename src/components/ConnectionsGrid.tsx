@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { ConnectionsPuzzle, ConnectionsGroup } from '../types/game';
 import { sound } from '../engine/sound';
 import { Shuffle, Sparkles } from 'lucide-react';
@@ -21,6 +21,19 @@ export const ConnectionsGrid: React.FC<ConnectionsGridProps> = ({
   const [mistakesLeft, setMistakesLeft] = useState<number>(4);
   const [attemptsEmojiHistory, setAttemptsEmojiHistory] = useState<string[]>([]);
   const [message, setMessage] = useState<string | null>(null);
+
+  const timeoutRef = useRef<any>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
+  const handleBackToMap = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    onBackToMap();
+  };
 
   const COLOR_STYLES: Record<ConnectionsGroup['colorTier'], { bg: string; border: string; text: string; emoji: string }> = {
     yellow: { bg: 'bg-amber-950/80', border: 'border-amber-400', text: 'text-amber-300', emoji: '🟨' },
@@ -84,7 +97,7 @@ export const ConnectionsGrid: React.FC<ConnectionsGridProps> = ({
         const score = 1000 + mistakesLeft * 200;
         const emojiGrid = attemptsEmojiHistory.concat(emojiRow).join('\n');
 
-        setTimeout(() => {
+        timeoutRef.current = setTimeout(() => {
           onComplete(score, stars, emojiGrid);
         }, 1500);
       }
@@ -111,7 +124,7 @@ export const ConnectionsGrid: React.FC<ConnectionsGridProps> = ({
       }
 
       if (nextMistakes <= 0) {
-        setTimeout(() => {
+        timeoutRef.current = setTimeout(() => {
           onComplete(200, 0, attemptsEmojiHistory.join('\n'));
         }, 1500);
       }
@@ -125,7 +138,7 @@ export const ConnectionsGrid: React.FC<ConnectionsGridProps> = ({
       {/* Header Bar */}
       <div className="w-full flex items-center justify-between p-4 rounded-2xl bg-slate-950/80 border border-slate-800 backdrop-blur-xl shadow-xl mb-6">
         <button
-          onClick={onBackToMap}
+          onClick={handleBackToMap}
           className="flex items-center gap-1 text-xs font-mono text-cyan-400 hover:text-cyan-300"
         >
           ← STAGE MAP
