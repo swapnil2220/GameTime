@@ -13,7 +13,8 @@ export function generateAptitudePuzzle(
   category?: AptitudeCategory,
   seed?: number
 ): AptitudePuzzle {
-  const rng = new SeededRandom(seed);
+  const levelSeed = seed ?? (levelNumber * 7919 + 1337);
+  const rng = new SeededRandom(levelSeed);
 
   const difficulty: DifficultyTier =
     levelNumber <= 10 ? 'beginner' : levelNumber <= 20 ? 'intermediate' : 'expert';
@@ -29,22 +30,35 @@ export function generateAptitudePuzzle(
   ];
   const selectedCategory = category ?? categories[(levelNumber - 1) % categories.length];
 
+  let puzzle: AptitudePuzzle;
+
   switch (selectedCategory) {
     case 'geography':
-      return generateGeographyPuzzle(difficulty, rng);
+      puzzle = generateGeographyPuzzle(difficulty, rng);
+      break;
     case 'sports':
-      return generateSportsPuzzle(difficulty, rng);
+      puzzle = generateSportsPuzzle(difficulty, rng);
+      break;
     case 'analogy':
-      return generateAnalogyPuzzle(difficulty, rng);
+      puzzle = generateAnalogyPuzzle(difficulty, rng);
+      break;
     case 'cipher':
-      return generateCipherPuzzle(difficulty, rng);
+      puzzle = generateCipherPuzzle(difficulty, rng);
+      break;
     case 'venn':
-      return generateVennPuzzle(difficulty, rng);
+      puzzle = generateVennPuzzle(difficulty, rng);
+      break;
     case 'series':
-      return generateSeriesPuzzle(difficulty, rng);
+      puzzle = generateSeriesPuzzle(difficulty, rng);
+      break;
     case 'syllogism':
-      return generateSyllogismPuzzle(difficulty, rng);
+      puzzle = generateSyllogismPuzzle(difficulty, rng);
+      break;
     default:
-      return generateGeographyPuzzle(difficulty, rng);
+      puzzle = generateGeographyPuzzle(difficulty, rng);
+      break;
   }
+
+  puzzle.levelNumber = levelNumber;
+  return puzzle;
 }

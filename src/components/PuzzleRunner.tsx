@@ -23,12 +23,22 @@ export const PuzzleRunner: React.FC<PuzzleRunnerProps> = ({
   onCompleteLevel,
   onBackToMap,
 }) => {
-  const [puzzle] = useState<AptitudePuzzle>(() => generateAptitudePuzzle(levelNumber));
+  const [puzzle, setPuzzle] = useState<AptitudePuzzle>(() => generateAptitudePuzzle(levelNumber));
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [showHint, setShowHint] = useState(false);
   const [showExplanation, setShowExplanation] = useState(false);
-  const [startTime] = useState<number>(Date.now());
+  const [startTime, setStartTime] = useState<number>(Date.now());
   const [elapsedSec, setElapsedSec] = useState(0);
+
+  useEffect(() => {
+    setPuzzle(generateAptitudePuzzle(levelNumber));
+    setSelectedOptionId(null);
+    setShowHint(false);
+    setShowExplanation(false);
+    const now = Date.now();
+    setStartTime(now);
+    setElapsedSec(0);
+  }, [levelNumber]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -114,7 +124,7 @@ export const PuzzleRunner: React.FC<PuzzleRunnerProps> = ({
   };
 
   return (
-    <div className="relative z-10 w-full max-w-4xl mx-auto px-4 py-6 flex flex-col items-center">
+    <div className="relative z-10 w-full max-w-4xl mx-auto px-4 py-6 flex flex-col items-center font-sans">
       {/* Top Level Runner Header */}
       <div className="w-full flex items-center justify-between p-4 rounded-2xl bg-slate-950/80 border border-slate-800 backdrop-blur-xl shadow-xl mb-6">
         <button
@@ -126,7 +136,7 @@ export const PuzzleRunner: React.FC<PuzzleRunnerProps> = ({
 
         <div className="flex items-center gap-2">
           <span className="px-3 py-1 rounded-xl bg-purple-950/80 border border-purple-500/40 text-purple-300 text-xs font-mono font-bold uppercase">
-            STAGE {levelNumber} • {puzzle.categoryTitle}
+            STAGE {levelNumber} • {puzzle.categoryTitle} ({puzzle.difficulty.toUpperCase()})
           </span>
         </div>
 

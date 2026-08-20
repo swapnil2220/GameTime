@@ -1,18 +1,17 @@
 import type { AptitudePuzzle, Option, DifficultyTier } from '../../types/game';
 import { SeededRandom } from '../seed';
 
-const WORDS_POOL = [
-  'CODE', 'LINK', 'MIND', 'STAR', 'WAVE', 'PEAK', 'NEXUS', 'GRID', 'FLOW', 'CYPHER'
-];
+const WORDS_BEGINNER = ['CODE', 'LINK', 'MIND', 'STAR', 'WAVE', 'PEAK'];
+const WORDS_INTERMEDIATE = ['NEXUS', 'GRID', 'FLOW', 'CYPHER', 'BEAM', 'PULSE'];
+const WORDS_EXPERT = ['ALGORITHM', 'ENCRYPTION', 'MATRIX', 'SPECTRUM', 'QUANTUM', 'VECTOR'];
 
 export function generateCipherPuzzle(difficulty: DifficultyTier, rng: SeededRandom): AptitudePuzzle {
-  const word1 = rng.pick(WORDS_POOL);
-  let word2 = rng.pick(WORDS_POOL.filter(w => w !== word1));
-  if (word2.length !== word1.length) {
-    word2 = WORDS_POOL.find(w => w.length === word1.length && w !== word1) || 'TEAM';
-  }
+  const pool = difficulty === 'beginner' ? WORDS_BEGINNER : difficulty === 'intermediate' ? WORDS_INTERMEDIATE : WORDS_EXPERT;
 
-  const shift = difficulty === 'beginner' ? 1 : difficulty === 'intermediate' ? 2 : 3;
+  const word1 = rng.pick(pool);
+  let word2 = rng.pick(pool.filter(w => w !== word1)) || 'HEART';
+
+  const shift = difficulty === 'beginner' ? 1 : difficulty === 'intermediate' ? 3 : 5;
 
   const encodeWord = (str: string, shiftVal: number) => {
     return str
@@ -70,7 +69,7 @@ export function generateCipherPuzzle(difficulty: DifficultyTier, rng: SeededRand
       shiftAmount: shift,
     },
     options,
-    explanation: `Each letter is shifted forward by ${shift} position(s) in the alphabet (${word1} → ${codedWord1}). Therefore, ${word2} becomes ${correctCodedWord2}.`,
+    explanation: `Difficulty level: ${difficulty.toUpperCase()}. Each letter is shifted forward by +${shift} in the alphabet (${word1} → ${codedWord1}). Therefore, ${word2} becomes ${correctCodedWord2}.`,
     visualHint: `Compare letter by letter: '${word1[0]}' shifted by +${shift} becomes '${codedWord1[0]}'.`,
   };
 }

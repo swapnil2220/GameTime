@@ -21,7 +21,7 @@ export const ResultModal: React.FC<ResultModalProps> = ({
   onBackToMap,
 }) => {
   return (
-    <div className="relative z-20 w-full max-w-xl mx-auto px-4 py-8">
+    <div className="relative z-20 w-full max-w-xl mx-auto px-4 py-8 font-sans">
       <div className="p-8 rounded-3xl bg-slate-950/90 border border-slate-800 backdrop-blur-2xl shadow-2xl flex flex-col items-center text-center">
         <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-500 via-purple-500 to-pink-500 p-0.5 shadow-[0_0_30px_rgba(168,85,247,0.4)] mb-4">
           <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
@@ -63,7 +63,7 @@ export const ResultModal: React.FC<ResultModalProps> = ({
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 w-full">
-          {stars > 0 && levelNumber < 15 && (
+          {stars > 0 && levelNumber < 30 && (
             <button
               onClick={onNextLevel}
               className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl bg-gradient-to-r from-cyan-500 via-indigo-600 to-purple-600 font-mono font-extrabold text-white text-sm shadow-[0_0_25px_rgba(0,243,255,0.4)] hover:scale-102 transition-all"
