@@ -55,6 +55,24 @@ export interface LevelProgress {
   bestScore: number;
 }
 
+export interface MindMatrixStats {
+  patternRecognition: number; // 0-100
+  spatialReasoning: number;   // 0-100
+  verbalFluency: number;      // 0-100
+  deductiveLogic: number;     // 0-100
+  mathematicalAgility: number;// 0-100
+  speedReflexes: number;      // 0-100
+}
+
+export interface BlitzResult {
+  score: number;
+  maxCombo: number;
+  accuracy: number; // % (0-100)
+  avgResponseTimeSec: number;
+  totalAnswered: number;
+  correctCount: number;
+}
+
 export interface UserProfile {
   id: string;
   username: string;
@@ -65,8 +83,16 @@ export interface UserProfile {
   dailyStreak: number;
   lastPlayedDate: string;
   seenQuestionIds?: string[];
+  mindMatrix: MindMatrixStats;
+  blitzHighScore: number;
   levelProgress: LevelProgress[];
   createdAt: string;
 }
 
-export type ViewState = 'level_select' | 'playing' | 'connections_playing' | 'result' | 'leaderboard';
+export type ViewState =
+  | 'level_select'
+  | 'playing'
+  | 'connections_playing'
+  | 'blitz_playing'
+  | 'result'
+  | 'leaderboard';

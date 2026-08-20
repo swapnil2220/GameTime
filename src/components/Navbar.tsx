@@ -1,13 +1,15 @@
 import React from 'react';
 import type { UserProfile } from '../types/game';
 import { AudioToggle } from './AudioToggle';
-import { Zap, Trophy, HelpCircle, User, Flame, Sparkles } from 'lucide-react';
+import { Zap, Trophy, HelpCircle, User, Flame, Sparkles, Brain } from 'lucide-react';
 
 interface NavbarProps {
   activeUser: UserProfile;
   onNavigate: (view: 'level_select' | 'leaderboard') => void;
   onOpenHowToPlay: () => void;
   onOpenAIStudio: () => void;
+  onOpenMindMatrix: () => void;
+  onStartBlitz: () => void;
   onOpenAuth: () => void;
   audioEnabled: boolean;
   onAudioToggle: (enabled: boolean) => void;
@@ -18,6 +20,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onNavigate,
   onOpenHowToPlay,
   onOpenAIStudio,
+  onOpenMindMatrix,
+  onStartBlitz,
   onOpenAuth,
   audioEnabled,
   onAudioToggle,
@@ -45,50 +49,68 @@ export const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       {/* Navigation & Controls */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5">
         {/* Daily Streak Badge */}
         <div
-          className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-950/80 to-orange-950/80 border border-amber-500/40 text-amber-300 text-xs font-mono font-bold shadow-[0_0_12px_rgba(245,158,11,0.2)]"
+          className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-950/80 to-orange-950/80 border border-amber-500/40 text-amber-300 text-xs font-mono font-bold shadow-[0_0_12px_rgba(245,158,11,0.2)]"
           title="Daily Habit Streak"
         >
           <Flame className="w-4 h-4 text-orange-400 fill-orange-400/80 animate-pulse" />
           <span>{activeUser.dailyStreak} DAY STREAK</span>
         </div>
 
+        {/* Speed Blitz Mode Button */}
+        <button
+          onClick={onStartBlitz}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-mono border bg-gradient-to-r from-red-950/80 via-amber-950/80 to-orange-950/80 border-amber-400 text-amber-300 hover:scale-105 shadow-[0_0_15px_rgba(245,158,11,0.3)] transition-all"
+        >
+          <Zap className="w-4 h-4 text-amber-400 fill-amber-400" />
+          <span className="hidden sm:inline font-extrabold">SPEED BLITZ</span>
+        </button>
+
+        {/* Mind Matrix Button */}
+        <button
+          onClick={onOpenMindMatrix}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-mono border bg-cyan-950/80 border-cyan-400/60 text-cyan-300 hover:border-cyan-300 shadow-[0_0_15px_rgba(0,243,255,0.2)] transition-all"
+        >
+          <Brain className="w-4 h-4 text-cyan-400" />
+          <span className="hidden sm:inline font-bold">MATRIX</span>
+        </button>
+
         {/* AI Custom Studio Button */}
         <button
           onClick={onOpenAIStudio}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-mono border bg-gradient-to-r from-amber-950/80 to-purple-950/80 border-amber-400 text-amber-300 hover:scale-105 shadow-[0_0_15px_rgba(245,158,11,0.25)] transition-all"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-mono border bg-gradient-to-r from-purple-950/80 to-pink-950/80 border-purple-400 text-purple-300 hover:scale-105 shadow-[0_0_15px_rgba(168,85,247,0.25)] transition-all"
         >
-          <Sparkles className="w-4 h-4 text-amber-400 fill-amber-400/20" />
-          <span>AI STUDIO</span>
+          <Sparkles className="w-4 h-4 text-purple-400 fill-purple-400/20" />
+          <span className="hidden md:inline">AI STUDIO</span>
         </button>
 
         {/* How to Play button */}
         <button
           onClick={onOpenHowToPlay}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-mono border bg-slate-900/80 border-slate-700/80 text-slate-300 hover:border-amber-400 transition-all"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-mono border bg-slate-900/80 border-slate-700/80 text-slate-300 hover:border-amber-400 transition-all"
         >
           <HelpCircle className="w-4 h-4 text-cyan-400" />
-          <span className="hidden sm:inline">GUIDE</span>
+          <span className="hidden xl:inline">GUIDE</span>
         </button>
 
         {/* Leaderboard button */}
         <button
           onClick={() => onNavigate('leaderboard')}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-mono border bg-slate-900/80 border-amber-500/40 text-amber-300 hover:border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.15)] transition-all"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-mono border bg-slate-900/80 border-amber-500/40 text-amber-300 hover:border-amber-400 transition-all"
         >
           <Trophy className="w-4 h-4 text-amber-400" />
-          <span className="hidden sm:inline">SCORES</span>
+          <span className="hidden xl:inline">SCORES</span>
         </button>
 
         {/* Profile Button */}
         <button
           onClick={onOpenAuth}
-          className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl border bg-slate-900 border-purple-500/50 text-purple-300 hover:border-purple-400 transition-all"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-xl border bg-slate-900 border-purple-500/50 text-purple-300 hover:border-purple-400 transition-all"
         >
           <span className="text-lg">{activeUser.avatar}</span>
-          <span className="text-xs font-mono font-bold max-w-[90px] truncate hidden sm:inline">
+          <span className="text-xs font-mono font-bold max-w-[80px] truncate hidden sm:inline">
             {activeUser.username}
           </span>
           <User className="w-3.5 h-3.5 text-purple-400" />

@@ -1,4 +1,4 @@
-import type { UserProfile, LevelProgress } from '../types/game';
+import type { UserProfile, LevelProgress, MindMatrixStats, AptitudeCategory, BlitzResult } from '../types/game';
 
 const USERS_STORAGE_KEY = 'logic_link_users_v3';
 const ACTIVE_USER_KEY = 'logic_link_active_user_id';
@@ -18,6 +18,17 @@ export function saveCustomGeminiKey(key: string) {
   }
 }
 
+export function createDefaultMindMatrix(): MindMatrixStats {
+  return {
+    patternRecognition: 50,
+    spatialReasoning: 50,
+    verbalFluency: 50,
+    deductiveLogic: 50,
+    mathematicalAgility: 50,
+    speedReflexes: 50,
+  };
+}
+
 export function createDefaultLevels(): LevelProgress[] {
   return Array.from({ length: 30 }).map((_, i) => ({
     levelNumber: i + 1,
@@ -29,12 +40,26 @@ export function createDefaultLevels(): LevelProgress[] {
   }));
 }
 
+function sanitizeUser(user: any): UserProfile {
+  if (!user.mindMatrix) {
+    user.mindMatrix = createDefaultMindMatrix();
+  }
+  if (typeof user.blitzHighScore !== 'number') {
+    user.blitzHighScore = 0;
+  }
+  if (!user.seenQuestionIds) {
+    user.seenQuestionIds = [];
+  }
+  return user as UserProfile;
+}
+
 export function getAllUsers(): UserProfile[] {
   const raw = localStorage.getItem(USERS_STORAGE_KEY);
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map(sanitizeUser);
   } catch (e) {
     console.error('Failed to parse user storage:', e);
     return [];
@@ -73,6 +98,8 @@ export function getActiveUser(): UserProfile {
     dailyStreak: 1,
     lastPlayedDate: today,
     seenQuestionIds: [],
+    mindMatrix: createDefaultMindMatrix(),
+    blitzHighScore: 0,
     levelProgress: createDefaultLevels(),
     createdAt: new Date().toISOString(),
   };
@@ -86,6 +113,8 @@ export function getActiveUser(): UserProfile {
 export function checkAndUpdateDailyStreak(user: UserProfile): UserProfile {
   const today = getTodayString();
   if (!user.seenQuestionIds) user.seenQuestionIds = [];
+  if (!user.mindMatrix) user.mindMatrix = createDefaultMindMatrix();
+
   if (user.lastPlayedDate === today) return user;
 
   const yesterday = new Date();
@@ -126,6 +155,8 @@ export function switchOrRegisterUser(usernameInput: string, avatar: string, isGu
       dailyStreak: 1,
       lastPlayedDate: today,
       seenQuestionIds: [],
+      mindMatrix: createDefaultMindMatrix(),
+      blitzHighScore: 0,
       levelProgress: createDefaultLevels(),
       createdAt: new Date().toISOString(),
     };
@@ -133,6 +164,7 @@ export function switchOrRegisterUser(usernameInput: string, avatar: string, isGu
   } else {
     existing.avatar = avatar;
     if (!existing.seenQuestionIds) existing.seenQuestionIds = [];
+    if (!existing.mindMatrix) existing.mindMatrix = createDefaultMindMatrix();
   }
 
   saveAllUsers(users);
@@ -148,6 +180,8 @@ export function resetUserProgress(userId: string): UserProfile {
     user.totalScore = 0;
     user.totalStars = 0;
     user.seenQuestionIds = [];
+    user.mindMatrix = createDefaultMindMatrix();
+    user.blitzHighScore = 0;
     saveAllUsers(users);
     return user;
   }
@@ -176,6 +210,65 @@ export function recordSeenQuestion(userId: string, questionId: string): UserProf
   return user;
 }
 
+export function updateMindMatrixRating(
+  userId: string,
+  category: AptitudeCategory,
+  isCorrect: boolean,
+  timeSpentSec: number
+): UserProfile {
+  const users = getAllUsers();
+  const user = users.find((u) => u.id === userId);
+  if (!user) return getActiveUser();
+
+  if (!user.mindMatrix) user.mindMatrix = createDefaultMindMatrix();
+
+  const delta = isCorrect ? +4 : -3;
+  const speedBonus = timeSpentSec <= 5 ? 3 : timeSpentSec <= 10 ? 1 : -1;
+
+  // Map category to cognitive dimension
+  switch (category) {
+    case 'series':
+    case 'analogy':
+      user.mindMatrix.patternRecognition = Math.min(100, Math.max(10, user.mindMatrix.patternRecognition + delta));
+      break;
+    case 'venn':
+    case 'geography':
+      user.mindMatrix.spatialReasoning = Math.min(100, Math.max(10, user.mindMatrix.spatialReasoning + delta));
+      break;
+    case 'verbal_analogy':
+    case 'cipher':
+      user.mindMatrix.verbalFluency = Math.min(100, Math.max(10, user.mindMatrix.verbalFluency + delta));
+      break;
+    case 'syllogism':
+    case 'connections':
+      user.mindMatrix.deductiveLogic = Math.min(100, Math.max(10, user.mindMatrix.deductiveLogic + delta));
+      break;
+    case 'math_logic':
+    case 'science':
+      user.mindMatrix.mathematicalAgility = Math.min(100, Math.max(10, user.mindMatrix.mathematicalAgility + delta));
+      break;
+    default:
+      break;
+  }
+
+  user.mindMatrix.speedReflexes = Math.min(100, Math.max(10, user.mindMatrix.speedReflexes + speedBonus));
+
+  saveAllUsers(users);
+  return user;
+}
+
+export function updateBlitzResult(userId: string, blitz: BlitzResult): UserProfile {
+  const users = getAllUsers();
+  const user = users.find((u) => u.id === userId);
+  if (!user) return getActiveUser();
+
+  user.blitzHighScore = Math.max(user.blitzHighScore || 0, blitz.score);
+  user.totalScore += blitz.score;
+
+  saveAllUsers(users);
+  return checkAndUpdateDailyStreak(user);
+}
+
 export function updateUserLevelProgress(
   userId: string,
   levelNumber: number,
@@ -200,7 +293,8 @@ export function updateUserLevelProgress(
     if (nextLvl) nextLvl.unlocked = true;
   }
 
-  user.totalScore = user.levelProgress.reduce((acc, l) => acc + l.bestScore, 0);
+  const campaignScore = user.levelProgress.reduce((acc, l) => acc + l.bestScore, 0);
+  user.totalScore = campaignScore + (user.blitzHighScore || 0);
   user.totalStars = user.levelProgress.reduce((acc, l) => acc + l.stars, 0);
 
   saveAllUsers(users);

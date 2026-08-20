@@ -7,6 +7,8 @@ import { BackgroundCanvas } from './components/BackgroundCanvas';
 import { LevelSelect } from './components/LevelSelect';
 import { ConnectionsGrid } from './components/ConnectionsGrid';
 import { PuzzleRunner } from './components/PuzzleRunner';
+import { BlitzRunner } from './components/BlitzRunner';
+import { MindMatrixModal } from './components/MindMatrixModal';
 import { ResultModal } from './components/ResultModal';
 import { Leaderboard } from './components/Leaderboard';
 import { HowToPlayModal } from './components/HowToPlayModal';
@@ -18,10 +20,13 @@ export function App() {
   const [viewState, setViewState] = useState<ViewState>('level_select');
   const [activeUser, setActiveUser] = useState<UserProfile>(() => getActiveUser());
   const [activeLevelNumber, setActiveLevelNumber] = useState<number>(1);
+  const [comboStreak, setComboStreak] = useState<number>(0);
   const [audioEnabled, setAudioEnabled] = useState(true);
+
   const [isHowToPlayOpen, setIsHowToPlayOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isAIStudioOpen, setIsAIStudioOpen] = useState(false);
+  const [isMindMatrixOpen, setIsMindMatrixOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
 
   const [activeConnectionsPuzzle, setActiveConnectionsPuzzle] = useState<ConnectionsPuzzle | null>(null);
@@ -40,6 +45,10 @@ export function App() {
     const puzzle = generateAIConnectionsPuzzle();
     setActiveConnectionsPuzzle(puzzle);
     setViewState('connections_playing');
+  };
+
+  const handleStartBlitz = () => {
+    setViewState('blitz_playing');
   };
 
   const handleGenerateTopicPuzzle = (topicPrompt: string, livePuzzle?: ConnectionsPuzzle | null) => {
@@ -64,15 +73,20 @@ export function App() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col relative font-sans selection:bg-cyan-500 selection:text-black">
-      {/* Background Canvas */}
-      <BackgroundCanvas overdrive={false} />
+      {/* Dynamic Background Canvas */}
+      <BackgroundCanvas comboStreak={comboStreak} />
 
       {/* Navigation Header */}
       <Navbar
         activeUser={activeUser}
-        onNavigate={(v) => setViewState(v)}
+        onNavigate={(v) => {
+          setComboStreak(0);
+          setViewState(v);
+        }}
         onOpenHowToPlay={() => setIsHowToPlayOpen(true)}
         onOpenAIStudio={() => setIsAIStudioOpen(true)}
+        onOpenMindMatrix={() => setIsMindMatrixOpen(true)}
+        onStartBlitz={handleStartBlitz}
         onOpenAuth={() => setIsAuthOpen(true)}
         audioEnabled={audioEnabled}
         onAudioToggle={setAudioEnabled}
@@ -86,6 +100,8 @@ export function App() {
             levels={activeUser.levelProgress}
             onSelectLevel={handleSelectLevel}
             onStartDailyAIChallenge={handleStartDailyAI}
+            onStartBlitz={handleStartBlitz}
+            onOpenMindMatrix={() => setIsMindMatrixOpen(true)}
             onOpenAIStudio={() => setIsAIStudioOpen(true)}
             onOpenHowToPlay={() => setIsHowToPlayOpen(true)}
           />
@@ -95,7 +111,10 @@ export function App() {
           <ConnectionsGrid
             puzzle={activeConnectionsPuzzle}
             onComplete={handleCompleteConnections}
-            onBackToMap={() => setViewState('level_select')}
+            onBackToMap={() => {
+              setComboStreak(0);
+              setViewState('level_select');
+            }}
           />
         )}
 
@@ -104,7 +123,22 @@ export function App() {
             activeUser={activeUser}
             levelNumber={activeLevelNumber}
             onCompleteLevel={handleCompleteLevel}
-            onBackToMap={() => setViewState('level_select')}
+            onBackToMap={() => {
+              setComboStreak(0);
+              setViewState('level_select');
+            }}
+          />
+        )}
+
+        {viewState === 'blitz_playing' && (
+          <BlitzRunner
+            activeUser={activeUser}
+            onUserUpdated={(newUser) => setActiveUser(newUser)}
+            onComboChange={setComboStreak}
+            onBackToMap={() => {
+              setComboStreak(0);
+              setViewState('level_select');
+            }}
           />
         )}
 
@@ -120,17 +154,18 @@ export function App() {
                 setViewState('playing');
               }}
               onRetryLevel={() => setViewState('playing')}
-              onBackToMap={() => setViewState('level_select')}
+              onBackToMap={() => {
+                setComboStreak(0);
+                setViewState('level_select');
+              }}
             />
 
-            {lastResult.emojiGrid && (
-              <button
-                onClick={() => setIsShareOpen(true)}
-                className="mt-4 px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-600 to-purple-600 font-mono font-extrabold text-black text-xs shadow-[0_0_20px_rgba(245,158,11,0.4)] hover:scale-105 transition-all"
-              >
-                📋 SHARE EMOJI SCORECARD WITH FRIENDS
-              </button>
-            )}
+            <button
+              onClick={() => setIsShareOpen(true)}
+              className="mt-4 px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-600 to-purple-600 font-mono font-extrabold text-black text-xs shadow-[0_0_20px_rgba(245,158,11,0.4)] hover:scale-105 transition-all"
+            >
+              📋 SHARE SCORECARD WITH FRIENDS
+            </button>
           </div>
         )}
 
@@ -141,6 +176,11 @@ export function App() {
 
       {/* Modals */}
       <HowToPlayModal isOpen={isHowToPlayOpen} onClose={() => setIsHowToPlayOpen(false)} />
+      <MindMatrixModal
+        isOpen={isMindMatrixOpen}
+        onClose={() => setIsMindMatrixOpen(false)}
+        activeUser={activeUser}
+      />
       <AIStudioModal
         isOpen={isAIStudioOpen}
         onClose={() => setIsAIStudioOpen(false)}
@@ -152,12 +192,13 @@ export function App() {
         onClose={() => setIsAuthOpen(false)}
         onUserChanged={(newUser) => setActiveUser(newUser)}
       />
-      {lastResult && lastResult.emojiGrid && (
+      {lastResult && (
         <ShareScoreModal
           isOpen={isShareOpen}
           score={lastResult.score}
           stars={lastResult.stars}
           emojiGrid={lastResult.emojiGrid}
+          activeUser={activeUser}
           onClose={() => setIsShareOpen(false)}
         />
       )}

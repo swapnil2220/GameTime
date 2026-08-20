@@ -1,12 +1,14 @@
 import React from 'react';
 import type { LevelProgress, UserProfile } from '../types/game';
-import { Star, Lock, Flame, ShieldCheck, HelpCircle, Award, Sparkles, Play } from 'lucide-react';
+import { Star, Lock, Flame, ShieldCheck, HelpCircle, Award, Sparkles, Play, Zap, Brain } from 'lucide-react';
 
 interface LevelSelectProps {
   activeUser: UserProfile;
   levels: LevelProgress[];
   onSelectLevel: (levelNumber: number) => void;
   onStartDailyAIChallenge: () => void;
+  onStartBlitz: () => void;
+  onOpenMindMatrix: () => void;
   onOpenAIStudio: () => void;
   onOpenHowToPlay: () => void;
 }
@@ -16,6 +18,8 @@ export const LevelSelect: React.FC<LevelSelectProps> = ({
   levels,
   onSelectLevel,
   onStartDailyAIChallenge,
+  onStartBlitz,
+  onOpenMindMatrix,
   onOpenAIStudio,
   onOpenHowToPlay,
 }) => {
@@ -40,40 +44,76 @@ export const LevelSelect: React.FC<LevelSelectProps> = ({
           LOGIC LINK: AI NEXUS
         </h2>
         <p className="max-w-md text-xs font-mono text-slate-400 mb-6">
-          Generative AI puzzles, 16-tile NYT Connections grid grouping, and custom AI prompt studio.
+          Generative AI puzzles, 60s Speed Blitz mode, and 6-axis Cognitive Mind Matrix analytics.
         </p>
 
-        {/* Featured Daily AI Mystery Challenge Card */}
-        <div className="w-full max-w-xl p-5 rounded-2xl bg-gradient-to-r from-amber-950/60 via-purple-950/60 to-slate-900/90 border-2 border-amber-400/80 backdrop-blur-md mb-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-[0_0_30px_rgba(245,158,11,0.25)]">
-          <div className="flex items-center gap-3 text-left">
-            <div className="w-12 h-12 rounded-xl bg-amber-500/20 border border-amber-400 flex items-center justify-center text-amber-300">
-              <Sparkles className="w-6 h-6 fill-current animate-pulse" />
+        {/* Dual Main Game Modes Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full mb-6">
+          {/* Speed Blitz Card */}
+          <div className="p-5 rounded-2xl bg-gradient-to-r from-red-950/70 via-amber-950/70 to-slate-900/90 border-2 border-amber-400/80 backdrop-blur-md flex flex-col justify-between text-left shadow-[0_0_30px_rgba(245,158,11,0.2)]">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-12 h-12 rounded-xl bg-amber-500/20 border border-amber-400 flex items-center justify-center text-amber-300">
+                <Zap className="w-6 h-6 fill-amber-400" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs font-mono text-amber-400 font-extrabold tracking-wider uppercase">
+                  OVERCLOCKED SPEED BLITZ
+                </span>
+                <span className="text-[11px] font-mono text-slate-300">
+                  60s Timer • Combo Multiplier • +3s / -5s
+                </span>
+              </div>
             </div>
-            <div className="flex flex-col">
-              <span className="text-xs font-mono text-amber-400 font-extrabold tracking-wider uppercase">
-                FEATURED DAILY AI MYSTERY #42
-              </span>
-              <span className="text-[11px] font-mono text-slate-300">
-                16-Tile Connections Grid • 4 Mystery Categories
-              </span>
-            </div>
+
+            <button
+              onClick={onStartBlitz}
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 font-mono font-extrabold text-black text-xs shadow-[0_0_20px_rgba(245,158,11,0.4)] hover:scale-102 transition-all flex items-center justify-center gap-2"
+            >
+              <Play className="w-4 h-4 fill-current" /> LAUNCH SPEED BLITZ
+            </button>
           </div>
 
-          <button
-            onClick={onStartDailyAIChallenge}
-            className="px-5 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 font-mono font-extrabold text-black text-xs shadow-[0_0_20px_rgba(245,158,11,0.4)] hover:scale-105 transition-all flex items-center gap-2 shrink-0"
-          >
-            <Play className="w-4 h-4 fill-current" /> PLAY DAILY AI
-          </button>
+          {/* Featured Daily AI Mystery Challenge Card */}
+          <div className="p-5 rounded-2xl bg-gradient-to-r from-purple-950/70 via-slate-950/90 to-slate-900/90 border-2 border-purple-400/80 backdrop-blur-md flex flex-col justify-between text-left shadow-[0_0_30px_rgba(168,85,247,0.2)]">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-12 h-12 rounded-xl bg-purple-500/20 border border-purple-400 flex items-center justify-center text-purple-300">
+                <Sparkles className="w-6 h-6 fill-current animate-pulse" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs font-mono text-purple-400 font-extrabold tracking-wider uppercase">
+                  DAILY AI MYSTERY #42
+                </span>
+                <span className="text-[11px] font-mono text-slate-300">
+                  16-Tile Connections Grid • 4 Mystery Categories
+                </span>
+              </div>
+            </div>
+
+            <button
+              onClick={onStartDailyAIChallenge}
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 font-mono font-extrabold text-white text-xs shadow-[0_0_20px_rgba(168,85,247,0.4)] hover:scale-102 transition-all flex items-center justify-center gap-2"
+            >
+              <Play className="w-4 h-4 fill-current" /> PLAY DAILY AI
+            </button>
+          </div>
         </div>
 
-        {/* Action Buttons: AI Studio */}
-        <button
-          onClick={onOpenAIStudio}
-          className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-slate-900 border border-purple-500/50 font-mono text-xs text-purple-300 font-bold hover:border-purple-400 transition-all mb-6"
-        >
-          <Sparkles className="w-4 h-4 text-purple-400" /> CREATE CUSTOM AI QUIZ ON ANY TOPIC
-        </button>
+        {/* Action Buttons: Mind Matrix & AI Studio */}
+        <div className="flex flex-wrap items-center justify-center gap-3 mb-6">
+          <button
+            onClick={onOpenMindMatrix}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-950/80 border border-cyan-400/60 font-mono text-xs text-cyan-300 font-bold hover:border-cyan-300 shadow-[0_0_15px_rgba(0,243,255,0.2)] transition-all"
+          >
+            <Brain className="w-4 h-4 text-cyan-400" /> VIEW MY 6-AXIS MIND MATRIX
+          </button>
+
+          <button
+            onClick={onOpenAIStudio}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 border border-purple-500/50 font-mono text-xs text-purple-300 font-bold hover:border-purple-400 transition-all"
+          >
+            <Sparkles className="w-4 h-4 text-purple-400" /> CREATE CUSTOM AI QUIZ ON ANY TOPIC
+          </button>
+        </div>
 
         {/* Active User Daily Stats Badge */}
         <div className="flex items-center gap-6 px-6 py-3 rounded-2xl bg-slate-900/90 border border-slate-800 font-mono text-xs">
@@ -93,6 +133,15 @@ export const LevelSelect: React.FC<LevelSelectProps> = ({
           <div className="flex items-center gap-1 text-amber-400 font-bold">
             <Star className="w-4 h-4 fill-amber-400" /> {activeUser.totalStars} STARS
           </div>
+
+          {activeUser.blitzHighScore > 0 && (
+            <>
+              <div className="h-4 w-px bg-slate-800" />
+              <div className="flex items-center gap-1 text-cyan-400 font-bold">
+                <Zap className="w-4 h-4 fill-cyan-400" /> BLITZ HIGH: {activeUser.blitzHighScore}
+              </div>
+            </>
+          )}
         </div>
       </div>
 
