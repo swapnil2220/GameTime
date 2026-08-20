@@ -66,22 +66,22 @@ export function generateAnalogyPuzzle(difficulty: DifficultyTier, rng: SeededRan
   }
 
   // Distractors with distinct properties
-  const options: Option[] = [];
-  options.push({ id: 'opt_correct', content: shapeD, isCorrect: true });
+  const rawOptions: Option[] = [];
+  rawOptions.push({ id: 'opt_correct', content: shapeD, isCorrect: true });
 
-  options.push({
+  rawOptions.push({
     id: 'opt_d1',
     content: { ...shapeC, outerColor: COLORS[5], innerColor: COLORS[0] },
     isCorrect: false,
   });
 
-  options.push({
+  rawOptions.push({
     id: 'opt_d2',
     content: { ...shapeD, rotation: 180, innerColor: COLORS[2] },
     isCorrect: false,
   });
 
-  options.push({
+  rawOptions.push({
     id: 'opt_d3',
     content: { ...shapeD, innerShape: shapeA.innerShape, outerColor: COLORS[1] },
     isCorrect: false,
@@ -91,13 +91,29 @@ export function generateAnalogyPuzzle(difficulty: DifficultyTier, rng: SeededRan
   const uniqueOptions: Option[] = [];
   const seenKeys = new Set<string>();
 
-  for (const opt of rng.shuffle(options)) {
+  for (const opt of rng.shuffle(rawOptions)) {
     const s = opt.content as AnalogyShape;
     const key = `${s.outerShape}_${s.innerShape}_${s.outerColor}_${s.innerColor}_${s.rotation}`;
     if (!seenKeys.has(key)) {
       seenKeys.add(key);
       uniqueOptions.push(opt);
     }
+  }
+
+  // Fallback loop guaranteeing 4 unique options
+  let extraRot = 45;
+  while (uniqueOptions.length < 4) {
+    const fallbackShape: AnalogyShape = {
+      ...shapeD,
+      rotation: (shapeD.rotation + extraRot) % 360,
+      outerColor: COLORS[extraRot % COLORS.length],
+    };
+    const key = `${fallbackShape.outerShape}_${fallbackShape.innerShape}_${fallbackShape.outerColor}_${fallbackShape.innerColor}_${fallbackShape.rotation}`;
+    if (!seenKeys.has(key)) {
+      seenKeys.add(key);
+      uniqueOptions.push({ id: `opt_an_fb_${extraRot}`, content: fallbackShape, isCorrect: false });
+    }
+    extraRot += 45;
   }
 
   return {

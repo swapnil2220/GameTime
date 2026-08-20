@@ -50,6 +50,17 @@ export function generateSeriesPuzzle(difficulty: DifficultyTier, rng: SeededRand
     }
   }
 
+  // Fallback loop ensuring 4 options
+  let extraDelta = 7;
+  while (options.length < 4) {
+    const candidate = targetVal + extraDelta;
+    if (!seen.has(candidate)) {
+      seen.add(candidate);
+      options.push({ id: `opt_ser_fb_${extraDelta}`, content: candidate, isCorrect: false });
+    }
+    extraDelta++;
+  }
+
   return {
     id: `series_${Date.now()}_${rng.range(100, 999)}`,
     category: 'series',

@@ -46,6 +46,17 @@ export function generateCipherPuzzle(difficulty: DifficultyTier, rng: SeededRand
     }
   }
 
+  // Fallback loop ensuring 4 options
+  let extraShift = 3;
+  while (options.length < 4) {
+    const candidate = encodeWord(word2, shift + extraShift);
+    if (!seen.has(candidate)) {
+      seen.add(candidate);
+      options.push({ id: `opt_ciph_fb_${extraShift}`, content: candidate, isCorrect: false });
+    }
+    extraShift++;
+  }
+
   return {
     id: `cipher_${Date.now()}_${rng.range(100, 999)}`,
     category: 'cipher',
