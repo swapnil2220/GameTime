@@ -72,6 +72,7 @@ export function getActiveUser(): UserProfile {
     totalStars: 0,
     dailyStreak: 1,
     lastPlayedDate: today,
+    seenQuestionIds: [],
     levelProgress: createDefaultLevels(),
     createdAt: new Date().toISOString(),
   };
@@ -84,6 +85,7 @@ export function getActiveUser(): UserProfile {
 
 export function checkAndUpdateDailyStreak(user: UserProfile): UserProfile {
   const today = getTodayString();
+  if (!user.seenQuestionIds) user.seenQuestionIds = [];
   if (user.lastPlayedDate === today) return user;
 
   const yesterday = new Date();
@@ -123,12 +125,14 @@ export function switchOrRegisterUser(usernameInput: string, avatar: string, isGu
       totalStars: 0,
       dailyStreak: 1,
       lastPlayedDate: today,
+      seenQuestionIds: [],
       levelProgress: createDefaultLevels(),
       createdAt: new Date().toISOString(),
     };
     users.push(existing);
   } else {
     existing.avatar = avatar;
+    if (!existing.seenQuestionIds) existing.seenQuestionIds = [];
   }
 
   saveAllUsers(users);
@@ -143,6 +147,7 @@ export function resetUserProgress(userId: string): UserProfile {
     user.levelProgress = createDefaultLevels();
     user.totalScore = 0;
     user.totalStars = 0;
+    user.seenQuestionIds = [];
     saveAllUsers(users);
     return user;
   }
@@ -155,6 +160,20 @@ export function deleteUserAccount(userId: string): UserProfile {
   saveAllUsers(users);
   localStorage.removeItem(ACTIVE_USER_KEY);
   return getActiveUser();
+}
+
+export function recordSeenQuestion(userId: string, questionId: string): UserProfile {
+  const users = getAllUsers();
+  const user = users.find((u) => u.id === userId);
+  if (!user) return getActiveUser();
+
+  if (!user.seenQuestionIds) user.seenQuestionIds = [];
+  if (!user.seenQuestionIds.includes(questionId)) {
+    user.seenQuestionIds.push(questionId);
+  }
+
+  saveAllUsers(users);
+  return user;
 }
 
 export function updateUserLevelProgress(

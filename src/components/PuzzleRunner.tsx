@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import type { AptitudePuzzle } from '../types/game';
+import type { AptitudePuzzle, UserProfile } from '../types/game';
 import { generateAptitudePuzzle } from '../engine/logicEngine';
+import { recordSeenQuestion } from '../engine/userManager';
 import { GeographyView } from './categoryViews/GeographyView';
 import { SportsView } from './categoryViews/SportsView';
 import { AnalogyShapeSVG } from './categoryViews/AnalogyView';
@@ -8,22 +9,29 @@ import { CipherView } from './categoryViews/CipherView';
 import { VennView } from './categoryViews/VennView';
 import { SeriesView } from './categoryViews/SeriesView';
 import { SyllogismView } from './categoryViews/SyllogismView';
+import { ScienceView } from './categoryViews/ScienceView';
+import { VerbalAnalogyView } from './categoryViews/VerbalAnalogyView';
+import { MathLogicView } from './categoryViews/MathLogicView';
 import { sound } from '../engine/sound';
 import { Lightbulb, ChevronRight, CheckCircle2, XCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface PuzzleRunnerProps {
+  activeUser: UserProfile;
   levelNumber: number;
   onCompleteLevel: (stars: number, score: number, timeSec: number) => void;
   onBackToMap: () => void;
 }
 
 export const PuzzleRunner: React.FC<PuzzleRunnerProps> = ({
+  activeUser,
   levelNumber,
   onCompleteLevel,
   onBackToMap,
 }) => {
-  const [puzzle, setPuzzle] = useState<AptitudePuzzle>(() => generateAptitudePuzzle(levelNumber));
+  const [puzzle, setPuzzle] = useState<AptitudePuzzle>(() =>
+    generateAptitudePuzzle(levelNumber, undefined, undefined, activeUser.seenQuestionIds || [])
+  );
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [showHint, setShowHint] = useState(false);
   const [showExplanation, setShowExplanation] = useState(false);
@@ -33,7 +41,15 @@ export const PuzzleRunner: React.FC<PuzzleRunnerProps> = ({
   const timeoutRef = useRef<any>(null);
 
   useEffect(() => {
-    setPuzzle(generateAptitudePuzzle(levelNumber));
+    const newPuzzle = generateAptitudePuzzle(
+      levelNumber,
+      undefined,
+      undefined,
+      activeUser.seenQuestionIds || []
+    );
+    setPuzzle(newPuzzle);
+    recordSeenQuestion(activeUser.id, newPuzzle.id);
+
     setSelectedOptionId(null);
     setShowHint(false);
     setShowExplanation(false);
@@ -44,7 +60,7 @@ export const PuzzleRunner: React.FC<PuzzleRunnerProps> = ({
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [levelNumber]);
+  }, [levelNumber, activeUser.id]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -106,11 +122,11 @@ export const PuzzleRunner: React.FC<PuzzleRunnerProps> = ({
       case 'analogy': {
         const { shapeA, shapeB, shapeC } = puzzle.renderedData;
         return (
-          <div className="flex items-center justify-center gap-3 my-4">
+          <div className="flex items-center justify-center gap-3 my-4 font-sans">
             <AnalogyShapeSVG shape={shapeA} label="SHAPE A" />
             <span className="text-slate-500 font-mono text-xl">:</span>
             <AnalogyShapeSVG shape={shapeB} label="SHAPE B" />
-            <span className="text-amber-400 font-mono text-2xl font-bold font-sans">::</span>
+            <span className="text-amber-400 font-mono text-2xl font-bold">::</span>
             <AnalogyShapeSVG shape={shapeC} label="SHAPE C" />
             <span className="text-slate-500 font-mono text-xl">:</span>
             <AnalogyShapeSVG shape={null} isQuestion label="SHAPE D" />
@@ -131,6 +147,12 @@ export const PuzzleRunner: React.FC<PuzzleRunnerProps> = ({
         return <SeriesView sequence={puzzle.renderedData.sequence} />;
       case 'syllogism':
         return <SyllogismView data={puzzle.renderedData} />;
+      case 'science':
+        return <ScienceView data={puzzle.renderedData} />;
+      case 'verbal_analogy':
+        return <VerbalAnalogyView data={puzzle.renderedData} />;
+      case 'math_logic':
+        return <MathLogicView equationText={puzzle.renderedData.equationText} />;
     }
   };
 

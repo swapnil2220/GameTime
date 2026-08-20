@@ -101,6 +101,7 @@ export function App() {
 
         {viewState === 'playing' && (
           <PuzzleRunner
+            activeUser={activeUser}
             levelNumber={activeLevelNumber}
             onCompleteLevel={handleCompleteLevel}
             onBackToMap={() => setViewState('level_select')}

@@ -7,11 +7,15 @@ import { generateCipherPuzzle } from './categories/ciphers';
 import { generateVennPuzzle } from './categories/vennLogic';
 import { generateSeriesPuzzle } from './categories/series';
 import { generateSyllogismPuzzle } from './categories/syllogisms';
+import { generateSciencePuzzle } from './categories/science';
+import { generateVerbalAnalogyPuzzle } from './categories/verbalAnalogies';
+import { generateMathLogicPuzzle } from './categories/mathLogic';
 
 export function generateAptitudePuzzle(
   levelNumber: number,
   category?: AptitudeCategory,
-  seed?: number
+  seed?: number,
+  seenIds: string[] = []
 ): AptitudePuzzle {
   const levelSeed = seed ?? (levelNumber * 7919 + 1337);
   const rng = new SeededRandom(levelSeed);
@@ -27,6 +31,9 @@ export function generateAptitudePuzzle(
     'venn',
     'series',
     'syllogism',
+    'science',
+    'verbal_analogy',
+    'math_logic',
   ];
   const selectedCategory = category ?? categories[(levelNumber - 1) % categories.length];
 
@@ -53,6 +60,15 @@ export function generateAptitudePuzzle(
       break;
     case 'syllogism':
       puzzle = generateSyllogismPuzzle(difficulty, rng);
+      break;
+    case 'science':
+      puzzle = generateSciencePuzzle(difficulty, rng, seenIds);
+      break;
+    case 'verbal_analogy':
+      puzzle = generateVerbalAnalogyPuzzle(difficulty, rng, seenIds);
+      break;
+    case 'math_logic':
+      puzzle = generateMathLogicPuzzle(difficulty, rng, seenIds);
       break;
     default:
       puzzle = generateGeographyPuzzle(difficulty, rng);
