@@ -1,7 +1,7 @@
 import React from 'react';
 import type { UserProfile } from '../types/game';
 import { AudioToggle } from './AudioToggle';
-import { Zap, Trophy, HelpCircle, User, Flame, Sparkles, Brain } from 'lucide-react';
+import { Zap, Trophy, HelpCircle, User, Flame, Sparkles, Brain, Swords } from 'lucide-react';
 
 interface NavbarProps {
   activeUser: UserProfile;
@@ -10,6 +10,7 @@ interface NavbarProps {
   onOpenAIStudio: () => void;
   onOpenMindMatrix: () => void;
   onStartBlitz: () => void;
+  onStartGhostDuel: () => void;
   onOpenAuth: () => void;
   audioEnabled: boolean;
   onAudioToggle: (enabled: boolean) => void;
@@ -22,6 +23,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenAIStudio,
   onOpenMindMatrix,
   onStartBlitz,
+  onStartGhostDuel,
   onOpenAuth,
   audioEnabled,
   onAudioToggle,
@@ -49,15 +51,24 @@ export const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       {/* Navigation & Controls */}
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-2">
         {/* Daily Streak Badge */}
         <div
-          className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-950/80 to-orange-950/80 border border-amber-500/40 text-amber-300 text-xs font-mono font-bold shadow-[0_0_12px_rgba(245,158,11,0.2)]"
+          className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-950/80 to-orange-950/80 border border-amber-500/40 text-amber-300 text-xs font-mono font-bold shadow-[0_0_12px_rgba(245,158,11,0.2)]"
           title="Daily Habit Streak"
         >
           <Flame className="w-4 h-4 text-orange-400 fill-orange-400/80 animate-pulse" />
           <span>{activeUser.dailyStreak} DAY STREAK</span>
         </div>
+
+        {/* Ghost Duel PvP Button */}
+        <button
+          onClick={onStartGhostDuel}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-mono border bg-gradient-to-r from-amber-950/90 to-purple-950/90 border-amber-400/80 text-amber-300 hover:scale-105 shadow-[0_0_15px_rgba(245,158,11,0.25)] transition-all"
+        >
+          <Swords className="w-4 h-4 text-amber-400" />
+          <span className="hidden sm:inline font-black">GHOST DUEL</span>
+        </button>
 
         {/* Speed Blitz Mode Button */}
         <button

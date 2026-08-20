@@ -56,22 +56,60 @@ export interface LevelProgress {
 }
 
 export interface MindMatrixStats {
-  patternRecognition: number; // 0-100
-  spatialReasoning: number;   // 0-100
-  verbalFluency: number;      // 0-100
-  deductiveLogic: number;     // 0-100
-  mathematicalAgility: number;// 0-100
-  speedReflexes: number;      // 0-100
+  patternRecognition: number;
+  spatialReasoning: number;
+  verbalFluency: number;
+  deductiveLogic: number;
+  mathematicalAgility: number;
+  speedReflexes: number;
 }
 
 export interface BlitzResult {
   score: number;
   maxCombo: number;
-  accuracy: number; // % (0-100)
+  accuracy: number;
   avgResponseTimeSec: number;
   totalAnswered: number;
   correctCount: number;
 }
+
+export type RelicModifierId = 'chronos_lens' | 'occams_razor' | 'chaos_cipher' | 'quantum_link';
+
+export interface RelicModifier {
+  id: RelicModifierId;
+  name: string;
+  icon: string;
+  description: string;
+  unlocked: boolean;
+  active: boolean;
+}
+
+export type AIPersonaType = 'socratic' | 'snarky' | 'zen';
+
+export interface AIPersona {
+  id: AIPersonaType;
+  name: string;
+  avatar: string;
+  tagline: string;
+}
+
+export interface GhostTelemetryFrame {
+  stepIndex: number;
+  timestampMs: number;
+  selectedOptionId: string;
+  isCorrect: boolean;
+}
+
+export interface GhostRunData {
+  seedStr: string;
+  username: string;
+  avatar: string;
+  totalTimeSec: number;
+  score: number;
+  telemetry: GhostTelemetryFrame[];
+}
+
+export type AudioTheme = 'cyberpunk' | 'zen' | 'typewriter';
 
 export interface UserProfile {
   id: string;
@@ -85,6 +123,9 @@ export interface UserProfile {
   seenQuestionIds?: string[];
   mindMatrix: MindMatrixStats;
   blitzHighScore: number;
+  activeRelics?: RelicModifierId[];
+  preferredPersona?: AIPersonaType;
+  audioTheme?: AudioTheme;
   levelProgress: LevelProgress[];
   createdAt: string;
 }
@@ -94,5 +135,6 @@ export type ViewState =
   | 'playing'
   | 'connections_playing'
   | 'blitz_playing'
+  | 'ghost_duel'
   | 'result'
   | 'leaderboard';

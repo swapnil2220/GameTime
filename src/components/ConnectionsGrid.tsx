@@ -1,17 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
-import type { ConnectionsPuzzle, ConnectionsGroup } from '../types/game';
+import type { ConnectionsPuzzle, ConnectionsGroup, UserProfile } from '../types/game';
+import { isRelicActive } from '../engine/modifierEngine';
 import { sound } from '../engine/sound';
-import { Shuffle, Sparkles } from 'lucide-react';
+import { Shuffle, Sparkles, Atom } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface ConnectionsGridProps {
   puzzle: ConnectionsPuzzle;
+  activeUser?: UserProfile;
   onComplete: (score: number, stars: number, emojiGrid: string) => void;
   onBackToMap: () => void;
 }
 
 export const ConnectionsGrid: React.FC<ConnectionsGridProps> = ({
   puzzle,
+  activeUser,
   onComplete,
   onBackToMap,
 }) => {
@@ -41,6 +44,21 @@ export const ConnectionsGrid: React.FC<ConnectionsGridProps> = ({
     blue: { bg: 'bg-cyan-950/80', border: 'border-cyan-400', text: 'text-cyan-300', emoji: '🟦' },
     purple: { bg: 'bg-purple-950/80', border: 'border-purple-400', text: 'text-purple-300', emoji: '🟪' },
   };
+
+  // Quantum Link Relic 2-Tile Pre-check
+  const hasQuantumLink = isRelicActive(activeUser?.activeRelics, 'quantum_link');
+  let quantumLinkStatus: string | null = null;
+
+  if (hasQuantumLink && selectedTiles.length === 2) {
+    const tileA = selectedTiles[0];
+    const tileB = selectedTiles[1];
+    const sameGroup = puzzle.groups.some(
+      (g) => g.items.includes(tileA as any) && g.items.includes(tileB as any)
+    );
+    quantumLinkStatus = sameGroup
+      ? '⚛️ QUANTUM LINK: MATCH! (Both tiles share a category)'
+      : '⚛️ QUANTUM LINK: NO MATCH (Tiles belong to different categories)';
+  }
 
   const handleTileClick = (tile: string) => {
     if (selectedTiles.includes(tile)) {
@@ -114,11 +132,11 @@ export const ConnectionsGrid: React.FC<ConnectionsGridProps> = ({
       const nextMistakes = mistakesLeft - 1;
       setMistakesLeft(nextMistakes);
 
-      const wrongEmojiRow = '🟥'.repeat(4);
+      const wrongEmojiRow = 'fffff';
       setAttemptsEmojiHistory((prev) => [...prev, wrongEmojiRow]);
 
       if (isOneAway) {
-        setMessage('ONE AWAY! 3 of 4 items belong to a group.');
+        setMessage('⚠️ ONE AWAY! Exactly 3 of your 4 selected tiles belong to a category.');
       } else {
         setMessage('INCALCULABLE! Try another 4-tile combination.');
       }
@@ -172,6 +190,14 @@ export const ConnectionsGrid: React.FC<ConnectionsGridProps> = ({
         </div>
       )}
 
+      {/* Quantum Link Relic Feedback Banner */}
+      {quantumLinkStatus && (
+        <div className="w-full p-3 rounded-xl bg-cyan-950/80 border border-cyan-400/60 text-xs font-mono text-cyan-200 text-center mb-4 shadow-[0_0_15px_rgba(0,243,255,0.2)] animate-pulse flex items-center justify-center gap-2">
+          <Atom className="w-4 h-4 text-cyan-400" />
+          <span>{quantumLinkStatus}</span>
+        </div>
+      )}
+
       {/* Solved Banner Cards */}
       <div className="w-full flex flex-col gap-3 mb-4">
         {solvedGroups.map((group, idx) => {
@@ -202,7 +228,7 @@ export const ConnectionsGrid: React.FC<ConnectionsGridProps> = ({
               <button
                 key={tile}
                 onClick={() => handleTileClick(tile)}
-                className={`p-4 rounded-2xl border font-mono font-bold text-xs sm:text-sm tracking-wide transition-all duration-300 min-h-[75px] flex items-center justify-center text-center ${
+                className={`p-4 rounded-2xl border font-mono font-bold text-xs sm:text-sm tracking-wide transition-all duration-200 min-h-[75px] flex items-center justify-center text-center ${
                   isSelected
                     ? 'bg-amber-400 border-amber-300 text-black shadow-[0_0_20px_rgba(245,158,11,0.5)] scale-105'
                     : 'bg-slate-900/80 border-slate-800 text-slate-200 hover:border-cyan-400/60 hover:shadow-[0_0_15px_rgba(0,243,255,0.2)]'

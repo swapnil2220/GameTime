@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import type { AptitudePuzzle, UserProfile } from '../types/game';
+import type { AptitudePuzzle, UserProfile, Option } from '../types/game';
 import { generateAptitudePuzzle } from '../engine/logicEngine';
 import { recordSeenQuestion } from '../engine/userManager';
+import { ALL_RELICS, isRelicActive } from '../engine/modifierEngine';
 import { GeographyView } from './categoryViews/GeographyView';
 import { SportsView } from './categoryViews/SportsView';
 import { AnalogyShapeSVG } from './categoryViews/AnalogyView';
@@ -12,6 +13,7 @@ import { SyllogismView } from './categoryViews/SyllogismView';
 import { ScienceView } from './categoryViews/ScienceView';
 import { VerbalAnalogyView } from './categoryViews/VerbalAnalogyView';
 import { MathLogicView } from './categoryViews/MathLogicView';
+import { NexusAIPersona } from './NexusAIPersona';
 import { sound } from '../engine/sound';
 import { Lightbulb, ChevronRight, CheckCircle2, XCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -21,6 +23,7 @@ interface PuzzleRunnerProps {
   levelNumber: number;
   onCompleteLevel: (stars: number, score: number, timeSec: number) => void;
   onBackToMap: () => void;
+  onUserUpdated?: (user: UserProfile) => void;
 }
 
 export const PuzzleRunner: React.FC<PuzzleRunnerProps> = ({
@@ -33,12 +36,14 @@ export const PuzzleRunner: React.FC<PuzzleRunnerProps> = ({
     generateAptitudePuzzle(levelNumber, undefined, undefined, activeUser.seenQuestionIds || [])
   );
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
-  const [showHint, setShowHint] = useState(false);
   const [showExplanation, setShowExplanation] = useState(false);
   const [startTime, setStartTime] = useState<number>(Date.now());
   const [elapsedSec, setElapsedSec] = useState(0);
 
   const timeoutRef = useRef<any>(null);
+
+  const hasOccamsRazor = isRelicActive(activeUser.activeRelics, 'occams_razor');
+  const hasChronosLens = isRelicActive(activeUser.activeRelics, 'chronos_lens');
 
   useEffect(() => {
     const newPuzzle = generateAptitudePuzzle(
@@ -51,7 +56,6 @@ export const PuzzleRunner: React.FC<PuzzleRunnerProps> = ({
     recordSeenQuestion(activeUser.id, newPuzzle.id);
 
     setSelectedOptionId(null);
-    setShowHint(false);
     setShowExplanation(false);
     const now = Date.now();
     setStartTime(now);
@@ -80,7 +84,7 @@ export const PuzzleRunner: React.FC<PuzzleRunnerProps> = ({
     setSelectedOptionId(optionId);
     sound.playClick();
 
-    const selectedOpt = puzzle.options.find((o) => o.id === optionId);
+    const selectedOpt = puzzle.options.find((o: Option) => o.id === optionId);
     const isCorrect = !!selectedOpt?.isCorrect;
 
     if (isCorrect) {
@@ -92,7 +96,9 @@ export const PuzzleRunner: React.FC<PuzzleRunnerProps> = ({
 
     setShowExplanation(true);
 
-    const timeSpent = Math.max(1, Math.floor((Date.now() - startTime) / 1000));
+    let timeSpent = Math.max(1, Math.floor((Date.now() - startTime) / 1000));
+    if (hasChronosLens) timeSpent = Math.max(1, timeSpent - 5);
+
     let stars = 1;
     if (isCorrect) {
       if (timeSpent <= 15) stars = 3;
@@ -101,12 +107,21 @@ export const PuzzleRunner: React.FC<PuzzleRunnerProps> = ({
       stars = 0;
     }
 
-    const score = isCorrect ? Math.max(100, 500 - timeSpent * 10) : 0;
+    let score = isCorrect ? Math.max(100, 500 - timeSpent * 10) : 0;
+    if (hasOccamsRazor && isCorrect) score = Math.round(score * 0.75);
 
     timeoutRef.current = setTimeout(() => {
       onCompleteLevel(stars, score, timeSpent);
     }, 1800);
   };
+
+  let visibleOptions = puzzle.options;
+  if (hasOccamsRazor && puzzle.options.length === 4) {
+    const wrongDistractor = puzzle.options.find((o: Option) => !o.isCorrect);
+    if (wrongDistractor) {
+      visibleOptions = puzzle.options.filter((o: Option) => o.id !== wrongDistractor.id);
+    }
+  }
 
   const renderCategoryBody = () => {
     switch (puzzle.category) {
@@ -173,34 +188,37 @@ export const PuzzleRunner: React.FC<PuzzleRunnerProps> = ({
           </span>
         </div>
 
+        {/* Active Relics Badges */}
+        {activeUser.activeRelics && activeUser.activeRelics.length > 0 && (
+          <div className="hidden sm:flex items-center gap-1">
+            {activeUser.activeRelics.map((rId) => {
+              const r = ALL_RELICS.find((rel) => rel.id === rId);
+              return (
+                <span
+                  key={rId}
+                  className="px-2 py-0.5 rounded-lg bg-amber-950/80 border border-amber-500/40 text-amber-300 text-[10px] font-mono"
+                  title={r?.description}
+                >
+                  {r?.icon} {r?.name}
+                </span>
+              );
+            })}
+          </div>
+        )}
+
         <span className="text-xs font-mono text-slate-400">TIME: {elapsedSec}s</span>
       </div>
 
       {/* Main Puzzle Area */}
       <div className="w-full p-8 rounded-3xl bg-slate-950/80 border border-slate-800 backdrop-blur-2xl shadow-2xl flex flex-col items-center">
-        {/* Render puzzle visuals */}
         <div className="w-full flex justify-center py-2">{renderCategoryBody()}</div>
 
-        {/* Visual Hint drawer */}
-        <div className="w-full mt-4 flex flex-col items-center">
-          <button
-            onClick={() => setShowHint((prev) => !prev)}
-            className="flex items-center gap-1.5 text-xs font-mono text-cyan-400/80 hover:text-cyan-300 transition-colors py-1 px-3 rounded-lg bg-cyan-950/30 border border-cyan-500/20"
-          >
-            <Lightbulb className="w-3.5 h-3.5" />
-            <span>{showHint ? 'HIDE HINT' : 'SHOW VISUAL HINT'}</span>
-          </button>
-
-          {showHint && (
-            <div className="mt-3 p-3.5 rounded-xl bg-slate-900/90 border border-cyan-500/40 text-xs font-mono text-cyan-200 text-center max-w-lg shadow-[0_0_15px_rgba(0,243,255,0.1)]">
-              {puzzle.visualHint}
-            </div>
-          )}
-        </div>
+        {/* Nexus AI Persona Companion */}
+        <NexusAIPersona puzzle={puzzle} personaType={activeUser.preferredPersona} />
 
         {/* Options Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full mt-6">
-          {puzzle.options.map((opt, idx) => {
+          {visibleOptions.map((opt: Option, idx: number) => {
             const isSelected = selectedOptionId === opt.id;
             const showResult = selectedOptionId !== null;
 
@@ -213,7 +231,7 @@ export const PuzzleRunner: React.FC<PuzzleRunnerProps> = ({
                   'bg-emerald-950/80 border-emerald-400 text-emerald-300 shadow-[0_0_25px_rgba(16,185,129,0.4)] scale-102';
               } else if (isSelected) {
                 buttonStyle =
-                  'bg-red-950/80 border-red-400 text-red-300 shadow-[0_0_25px_rgba(239,68,68,0.4)]';
+                  'bg-red-950/80 border-red-400 text-red-300 shadow-[0_0_25px_rgba(239,68,68,0.4)] animate-shake';
               } else {
                 buttonStyle = 'bg-slate-950/40 border-slate-900 text-slate-600 opacity-40';
               }
@@ -224,7 +242,7 @@ export const PuzzleRunner: React.FC<PuzzleRunnerProps> = ({
                 key={opt.id}
                 disabled={selectedOptionId !== null}
                 onClick={() => handleOptionSelect(opt.id)}
-                className={`relative flex items-center justify-between p-4 rounded-2xl border backdrop-blur-md font-mono transition-all duration-300 ${buttonStyle}`}
+                className={`relative flex items-center justify-between p-4 rounded-2xl border backdrop-blur-md font-mono transition-all duration-200 ${buttonStyle}`}
               >
                 <div className="flex items-center gap-3">
                   <span className="w-7 h-7 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-slate-300">

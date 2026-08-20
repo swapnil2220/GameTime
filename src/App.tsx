@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
-import type { ViewState, UserProfile, ConnectionsPuzzle } from './types/game';
-import { getActiveUser, updateUserLevelProgress } from './engine/userManager';
+import type { ViewState, UserProfile, ConnectionsPuzzle, GhostRunData } from './types/game';
+import { getActiveUser, updateUserLevelProgress, saveAllUsers, getAllUsers } from './engine/userManager';
 import { generateAIConnectionsPuzzle } from './engine/aiEngine';
+import { importGhostRunFromBase64 } from './components/GhostDuelModal';
 import { Navbar } from './components/Navbar';
 import { BackgroundCanvas } from './components/BackgroundCanvas';
 import { LevelSelect } from './components/LevelSelect';
 import { ConnectionsGrid } from './components/ConnectionsGrid';
 import { PuzzleRunner } from './components/PuzzleRunner';
 import { BlitzRunner } from './components/BlitzRunner';
+import { GhostDuelModal } from './components/GhostDuelModal';
 import { MindMatrixModal } from './components/MindMatrixModal';
 import { ResultModal } from './components/ResultModal';
 import { Leaderboard } from './components/Leaderboard';
@@ -30,11 +32,35 @@ export function App() {
   const [isShareOpen, setIsShareOpen] = useState(false);
 
   const [activeConnectionsPuzzle, setActiveConnectionsPuzzle] = useState<ConnectionsPuzzle | null>(null);
+  const [importedGhostRun, setImportedGhostRun] = useState<GhostRunData | null>(null);
   const [lastResult, setLastResult] = useState<{ stars: number; score: number; timeSec: number; emojiGrid?: string } | null>(null);
 
   useEffect(() => {
     setActiveUser(getActiveUser());
+
+    // Parse ?duel=... Base64 challenge URL
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const duelParam = urlParams.get('duel');
+      if (duelParam) {
+        const parsed = importGhostRunFromBase64(duelParam);
+        if (parsed) {
+          setImportedGhostRun(parsed);
+          setViewState('ghost_duel');
+        }
+      }
+    }
   }, []);
+
+  const handleUserUpdated = (newUser: UserProfile) => {
+    setActiveUser(newUser);
+    const allUsers = getAllUsers();
+    const idx = allUsers.findIndex((u) => u.id === newUser.id);
+    if (idx !== -1) {
+      allUsers[idx] = newUser;
+      saveAllUsers(allUsers);
+    }
+  };
 
   const handleSelectLevel = (lvlNum: number) => {
     setActiveLevelNumber(lvlNum);
@@ -49,6 +75,10 @@ export function App() {
 
   const handleStartBlitz = () => {
     setViewState('blitz_playing');
+  };
+
+  const handleStartGhostDuel = () => {
+    setViewState('ghost_duel');
   };
 
   const handleGenerateTopicPuzzle = (topicPrompt: string, livePuzzle?: ConnectionsPuzzle | null) => {
@@ -87,6 +117,7 @@ export function App() {
         onOpenAIStudio={() => setIsAIStudioOpen(true)}
         onOpenMindMatrix={() => setIsMindMatrixOpen(true)}
         onStartBlitz={handleStartBlitz}
+        onStartGhostDuel={handleStartGhostDuel}
         onOpenAuth={() => setIsAuthOpen(true)}
         audioEnabled={audioEnabled}
         onAudioToggle={setAudioEnabled}
@@ -101,15 +132,18 @@ export function App() {
             onSelectLevel={handleSelectLevel}
             onStartDailyAIChallenge={handleStartDailyAI}
             onStartBlitz={handleStartBlitz}
+            onStartGhostDuel={handleStartGhostDuel}
             onOpenMindMatrix={() => setIsMindMatrixOpen(true)}
             onOpenAIStudio={() => setIsAIStudioOpen(true)}
             onOpenHowToPlay={() => setIsHowToPlayOpen(true)}
+            onUserUpdated={handleUserUpdated}
           />
         )}
 
         {viewState === 'connections_playing' && activeConnectionsPuzzle && (
           <ConnectionsGrid
             puzzle={activeConnectionsPuzzle}
+            activeUser={activeUser}
             onComplete={handleCompleteConnections}
             onBackToMap={() => {
               setComboStreak(0);
@@ -127,14 +161,26 @@ export function App() {
               setComboStreak(0);
               setViewState('level_select');
             }}
+            onUserUpdated={handleUserUpdated}
           />
         )}
 
         {viewState === 'blitz_playing' && (
           <BlitzRunner
             activeUser={activeUser}
-            onUserUpdated={(newUser) => setActiveUser(newUser)}
+            onUserUpdated={handleUserUpdated}
             onComboChange={setComboStreak}
+            onBackToMap={() => {
+              setComboStreak(0);
+              setViewState('level_select');
+            }}
+          />
+        )}
+
+        {viewState === 'ghost_duel' && (
+          <GhostDuelModal
+            activeUser={activeUser}
+            initialGhostData={importedGhostRun}
             onBackToMap={() => {
               setComboStreak(0);
               setViewState('level_select');

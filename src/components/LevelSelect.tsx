@@ -1,6 +1,7 @@
 import React from 'react';
-import type { LevelProgress, UserProfile } from '../types/game';
-import { Star, Lock, Flame, ShieldCheck, HelpCircle, Award, Sparkles, Play, Zap, Brain } from 'lucide-react';
+import type { LevelProgress, UserProfile, RelicModifierId } from '../types/game';
+import { ALL_RELICS, toggleRelicInList } from '../engine/modifierEngine';
+import { Star, Lock, Flame, ShieldCheck, HelpCircle, Award, Sparkles, Play, Zap, Brain, Swords, ShieldAlert } from 'lucide-react';
 
 interface LevelSelectProps {
   activeUser: UserProfile;
@@ -8,9 +9,11 @@ interface LevelSelectProps {
   onSelectLevel: (levelNumber: number) => void;
   onStartDailyAIChallenge: () => void;
   onStartBlitz: () => void;
+  onStartGhostDuel: () => void;
   onOpenMindMatrix: () => void;
   onOpenAIStudio: () => void;
   onOpenHowToPlay: () => void;
+  onUserUpdated?: (user: UserProfile) => void;
 }
 
 export const LevelSelect: React.FC<LevelSelectProps> = ({
@@ -19,10 +22,23 @@ export const LevelSelect: React.FC<LevelSelectProps> = ({
   onSelectLevel,
   onStartDailyAIChallenge,
   onStartBlitz,
+  onStartGhostDuel,
   onOpenMindMatrix,
   onOpenAIStudio,
   onOpenHowToPlay,
+  onUserUpdated,
 }) => {
+  const activeRelicIds = activeUser.activeRelics || [];
+
+  const handleToggleRelic = (rId: RelicModifierId) => {
+    const updatedRelics = toggleRelicInList(activeRelicIds, rId);
+    const updatedUser: UserProfile = {
+      ...activeUser,
+      activeRelics: updatedRelics,
+    };
+    if (onUserUpdated) onUserUpdated(updatedUser);
+  };
+
   return (
     <div className="relative z-10 w-full max-w-4xl mx-auto px-4 py-8 flex flex-col items-center font-sans">
       {/* Hero Banner */}
@@ -44,57 +60,117 @@ export const LevelSelect: React.FC<LevelSelectProps> = ({
           LOGIC LINK: AI NEXUS
         </h2>
         <p className="max-w-md text-xs font-mono text-slate-400 mb-6">
-          Generative AI puzzles, 60s Speed Blitz mode, and 6-axis Cognitive Mind Matrix analytics.
+          Generative AI puzzles, 60s Speed Blitz mode, Balatro-style Relic modifiers, and Seeded Ghost Duels.
         </p>
 
-        {/* Dual Main Game Modes Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full mb-6">
+        {/* Triple Featured Game Modes Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full mb-6">
           {/* Speed Blitz Card */}
-          <div className="p-5 rounded-2xl bg-gradient-to-r from-red-950/70 via-amber-950/70 to-slate-900/90 border-2 border-amber-400/80 backdrop-blur-md flex flex-col justify-between text-left shadow-[0_0_30px_rgba(245,158,11,0.2)]">
+          <div className="p-5 rounded-2xl bg-gradient-to-r from-red-950/70 via-amber-950/70 to-slate-900/90 border-2 border-amber-400/80 backdrop-blur-md flex flex-col justify-between text-left shadow-[0_0_20px_rgba(245,158,11,0.2)]">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 rounded-xl bg-amber-500/20 border border-amber-400 flex items-center justify-center text-amber-300">
-                <Zap className="w-6 h-6 fill-amber-400" />
+              <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-400 flex items-center justify-center text-amber-300">
+                <Zap className="w-5 h-5 fill-amber-400" />
               </div>
               <div className="flex flex-col">
                 <span className="text-xs font-mono text-amber-400 font-extrabold tracking-wider uppercase">
-                  OVERCLOCKED SPEED BLITZ
+                  SPEED BLITZ
                 </span>
-                <span className="text-[11px] font-mono text-slate-300">
-                  60s Timer • Combo Multiplier • +3s / -5s
+                <span className="text-[10px] font-mono text-slate-300">
+                  60s Timer • Multipliers
                 </span>
               </div>
             </div>
 
             <button
               onClick={onStartBlitz}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 font-mono font-extrabold text-black text-xs shadow-[0_0_20px_rgba(245,158,11,0.4)] hover:scale-102 transition-all flex items-center justify-center gap-2"
+              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 font-mono font-extrabold text-black text-xs shadow-md hover:scale-102 transition-all flex items-center justify-center gap-1.5"
             >
-              <Play className="w-4 h-4 fill-current" /> LAUNCH SPEED BLITZ
+              <Play className="w-3.5 h-3.5 fill-current" /> SPEED BLITZ
             </button>
           </div>
 
-          {/* Featured Daily AI Mystery Challenge Card */}
-          <div className="p-5 rounded-2xl bg-gradient-to-r from-purple-950/70 via-slate-950/90 to-slate-900/90 border-2 border-purple-400/80 backdrop-blur-md flex flex-col justify-between text-left shadow-[0_0_30px_rgba(168,85,247,0.2)]">
+          {/* Ghost Duel PvP Card */}
+          <div className="p-5 rounded-2xl bg-gradient-to-r from-amber-950/70 via-purple-950/70 to-slate-900/90 border-2 border-amber-500/80 backdrop-blur-md flex flex-col justify-between text-left shadow-[0_0_20px_rgba(245,158,11,0.2)]">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 rounded-xl bg-purple-500/20 border border-purple-400 flex items-center justify-center text-purple-300">
-                <Sparkles className="w-6 h-6 fill-current animate-pulse" />
+              <div className="w-10 h-10 rounded-xl bg-purple-500/20 border border-amber-400 flex items-center justify-center text-amber-400">
+                <Swords className="w-5 h-5" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs font-mono text-amber-300 font-extrabold tracking-wider uppercase">
+                  GHOST DUELS PvP
+                </span>
+                <span className="text-[10px] font-mono text-slate-300">
+                  Seeded Race • Delta HUD
+                </span>
+              </div>
+            </div>
+
+            <button
+              onClick={onStartGhostDuel}
+              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-purple-600 font-mono font-extrabold text-black text-xs shadow-md hover:scale-102 transition-all flex items-center justify-center gap-1.5"
+            >
+              <Swords className="w-3.5 h-3.5" /> GHOST DUEL
+            </button>
+          </div>
+
+          {/* Daily AI Mystery Card */}
+          <div className="p-5 rounded-2xl bg-gradient-to-r from-purple-950/70 via-slate-950/90 to-slate-900/90 border-2 border-purple-400/80 backdrop-blur-md flex flex-col justify-between text-left shadow-[0_0_20px_rgba(168,85,247,0.2)]">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-400 flex items-center justify-center text-purple-300">
+                <Sparkles className="w-5 h-5 fill-current animate-pulse" />
               </div>
               <div className="flex flex-col">
                 <span className="text-xs font-mono text-purple-400 font-extrabold tracking-wider uppercase">
-                  DAILY AI MYSTERY #42
+                  DAILY AI #42
                 </span>
-                <span className="text-[11px] font-mono text-slate-300">
-                  16-Tile Connections Grid • 4 Mystery Categories
+                <span className="text-[10px] font-mono text-slate-300">
+                  16-Tile Connections
                 </span>
               </div>
             </div>
 
             <button
               onClick={onStartDailyAIChallenge}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 font-mono font-extrabold text-white text-xs shadow-[0_0_20px_rgba(168,85,247,0.4)] hover:scale-102 transition-all flex items-center justify-center gap-2"
+              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 font-mono font-extrabold text-white text-xs shadow-md hover:scale-102 transition-all flex items-center justify-center gap-1.5"
             >
-              <Play className="w-4 h-4 fill-current" /> PLAY DAILY AI
+              <Play className="w-3.5 h-3.5 fill-current" /> DAILY AI
             </button>
+          </div>
+        </div>
+
+        {/* Cognitive Relics & Modifiers Manager HUD */}
+        <div className="w-full p-5 rounded-2xl bg-slate-900/90 border border-slate-800 backdrop-blur-md mb-6 flex flex-col text-left">
+          <div className="flex items-center gap-2 mb-3">
+            <ShieldAlert className="w-4 h-4 text-amber-400" />
+            <span className="text-xs font-mono font-extrabold text-amber-300 uppercase tracking-wider">
+              COGNITIVE RELICS & MODIFIERS (EQUIP MAX 2)
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+            {ALL_RELICS.map((relic) => {
+              const isActive = activeRelicIds.includes(relic.id);
+              return (
+                <button
+                  key={relic.id}
+                  onClick={() => handleToggleRelic(relic.id)}
+                  className={`p-3 rounded-xl border text-left flex items-start gap-3 transition-all font-mono ${
+                    isActive
+                      ? 'bg-amber-950/80 border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)]'
+                      : 'bg-slate-950 border-slate-800 opacity-60 hover:opacity-100'
+                  }`}
+                >
+                  <span className="text-2xl">{relic.icon}</span>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-extrabold text-slate-100 flex items-center gap-2">
+                      {relic.name}
+                      {isActive && <span className="text-[9px] text-amber-400 font-bold uppercase">[EQUIPPED]</span>}
+                    </span>
+                    <span className="text-[10px] text-slate-400 mt-0.5">{relic.description}</span>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
 

@@ -1,19 +1,11 @@
+import type { AudioTheme } from '../types/game';
+
 class SoundEngine {
   private ctx: AudioContext | null = null;
   public enabled: boolean = true;
+  public theme: AudioTheme = 'cyberpunk';
 
-  // C Pentatonic Major Scale: C4, D4, E4, G4, A4, C5, E5, G5, C6
-  private PENTATONIC_SCALE = [
-    261.63, // C4
-    293.66, // D4
-    329.63, // E4
-    392.0,  // G4
-    440.0,  // A4
-    523.25, // C5
-    659.25, // E5
-    783.99, // G5
-    1046.5, // C6
-  ];
+  private PENTATONIC_SCALE = [261.63, 293.66, 329.63, 392.0, 440.0, 523.25, 659.25, 783.99, 1046.5];
 
   private initCtx() {
     if (!this.ctx && typeof window !== 'undefined') {
@@ -27,12 +19,16 @@ class SoundEngine {
     }
   }
 
+  public setTheme(newTheme: AudioTheme) {
+    this.theme = newTheme;
+  }
+
   private triggerHaptic(pattern: number[] = [15, 30, 15]) {
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
       try {
         navigator.vibrate(pattern);
       } catch (e) {
-        // Ignore if unsupported or restricted
+        // Ignore restricted vibration
       }
     }
   }
@@ -42,26 +38,53 @@ class SoundEngine {
     this.initCtx();
     if (!this.ctx) return;
 
+    const now = this.ctx.currentTime;
+
+    if (this.theme === 'typewriter') {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(1200, now);
+      osc.frequency.exponentialRampToValueAtTime(100, now + 0.02);
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.02);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.02);
+      return;
+    }
+
+    if (this.theme === 'zen') {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(320, now);
+      gain.gain.setValueAtTime(0.1, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.08);
+      return;
+    }
+
+    // Default Cyberpunk
     const osc = this.ctx.createOscillator();
     const filter = this.ctx.createBiquadFilter();
     const gain = this.ctx.createGain();
-
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(450, this.ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(200, this.ctx.currentTime + 0.04);
-
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(500, now);
+    osc.frequency.exponentialRampToValueAtTime(200, now + 0.04);
     filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(800, this.ctx.currentTime);
-
-    gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.04);
-
+    filter.frequency.setValueAtTime(1000, now);
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.04);
     osc.connect(filter);
     filter.connect(gain);
     gain.connect(this.ctx.destination);
-
-    osc.start();
-    osc.stop(this.ctx.currentTime + 0.04);
+    osc.start(now);
+    osc.stop(now + 0.04);
   }
 
   public playComboNote(comboStreak: number = 1) {
@@ -71,23 +94,66 @@ class SoundEngine {
 
     const noteIdx = Math.min(this.PENTATONIC_SCALE.length - 1, (comboStreak - 1) % this.PENTATONIC_SCALE.length);
     const freq = this.PENTATONIC_SCALE[noteIdx];
-
     const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
 
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(freq, now);
-    osc.frequency.exponentialRampToValueAtTime(freq * 1.02, now + 0.15);
+    if (this.theme === 'typewriter') {
+      // Typewriter bell chime
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1760, now); // A6 bell
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.3);
+      this.triggerHaptic([15, 30, 15]);
+      return;
+    }
 
-    gain.gain.setValueAtTime(0.22, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+    if (this.theme === 'zen') {
+      // Singing bowl / Marimba sine tone
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq * 0.75, now);
+      gain.gain.setValueAtTime(0.25, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.4);
+      this.triggerHaptic([15, 30, 15]);
+      return;
+    }
 
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
+    // FM Synthesis for Cyberpunk Mode
+    const carrier = this.ctx.createOscillator();
+    const modulator = this.ctx.createOscillator();
+    const modGain = this.ctx.createGain();
+    const mainGain = this.ctx.createGain();
 
-    osc.start(now);
-    osc.stop(now + 0.25);
+    carrier.type = 'triangle';
+    modulator.type = 'sine';
+
+    carrier.frequency.setValueAtTime(freq, now);
+    modulator.frequency.setValueAtTime(freq * 2, now); // 2:1 ratio FM
+    modGain.gain.setValueAtTime(freq * 1.5, now);
+
+    modulator.connect(modGain);
+    modGain.connect(carrier.frequency);
+
+    mainGain.gain.setValueAtTime(0.22, now);
+    mainGain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+
+    carrier.connect(mainGain);
+    mainGain.connect(this.ctx.destination);
+
+    carrier.start(now);
+    modulator.start(now);
+    carrier.stop(now + 0.25);
+    modulator.stop(now + 0.25);
 
     this.triggerHaptic([15, 30, 15]);
   }
@@ -109,8 +175,8 @@ class SoundEngine {
     osc1.type = 'sine';
     osc2.type = 'triangle';
 
-    osc1.frequency.setValueAtTime(523.25, now); // C5
-    osc2.frequency.setValueAtTime(783.99, now); // G5 (Harmonic fifth)
+    osc1.frequency.setValueAtTime(523.25, now);
+    osc2.frequency.setValueAtTime(783.99, now);
 
     gain.gain.setValueAtTime(0.25, now);
     gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
@@ -133,23 +199,46 @@ class SoundEngine {
     if (!this.ctx) return;
 
     const now = this.ctx.currentTime;
+
+    // Sub-bass drop error effect
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
 
     osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(140, now);
-    osc.frequency.linearRampToValueAtTime(75, now + 0.3);
+    osc.frequency.setValueAtTime(120, now);
+    osc.frequency.exponentialRampToValueAtTime(40, now + 0.35); // Sub-bass drop
 
-    gain.gain.setValueAtTime(0.25, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
 
     osc.connect(gain);
     gain.connect(this.ctx.destination);
 
     osc.start(now);
-    osc.stop(now + 0.3);
+    osc.stop(now + 0.35);
 
     this.triggerHaptic([40, 60, 40]);
+  }
+
+  public playTickWarning() {
+    if (!this.enabled) return;
+    this.initCtx();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(880, now);
+    gain.gain.setValueAtTime(0.08, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.03);
   }
 
   public playOverdrive() {

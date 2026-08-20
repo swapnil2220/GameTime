@@ -1,4 +1,4 @@
-import type { ConnectionsPuzzle, ConnectionsGroup } from '../types/game';
+import type { ConnectionsPuzzle, ConnectionsGroup, AIPersonaType, AptitudePuzzle } from '../types/game';
 import { SeededRandom } from './seed';
 
 const AI_PRESET_PUZZLES: Array<{ title: string; groups: [ConnectionsGroup, ConnectionsGroup, ConnectionsGroup, ConnectionsGroup] }> = [
@@ -120,6 +120,64 @@ const AI_PRESET_PUZZLES: Array<{ title: string; groups: [ConnectionsGroup, Conne
   },
 ];
 
+export async function fetchPersonaHint(
+  puzzle: AptitudePuzzle,
+  personaType: AIPersonaType,
+  hintStep: number
+): Promise<string> {
+  const activeKey = import.meta.env.VITE_GEMINI_API_KEY;
+  if (activeKey && activeKey !== 'your_gemini_api_key_here') {
+    try {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeKey}`;
+      const personaRole =
+        personaType === 'socratic'
+          ? 'You are a Socratic mentor. Ask a probing 1-sentence analytical question that guides the user to deduce the answer.'
+          : personaType === 'snarky'
+          ? 'You are a sarcastic, hyper-witty AI named Glitch-X 9000. Give a 1-sentence funny hint that teases the user.'
+          : 'You are a calm Zen Master. Provide a 1-sentence philosophical insight into the pattern.';
+
+      const promptText = `${personaRole}
+Puzzle Category: ${puzzle.categoryTitle}
+Visual Hint: ${puzzle.visualHint}
+Explanation: ${puzzle.explanation}
+Hint Step: ${hintStep} of 3.
+Give ONLY the 1-sentence hint output.`;
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: promptText }] }],
+          generationConfig: { temperature: 0.8, maxOutputTokens: 100 },
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) return text.trim();
+      }
+    } catch (e) {
+      // Fallback to local
+    }
+  }
+
+  // Local persona fallback
+  if (personaType === 'socratic') {
+    if (hintStep === 1) return `What fundamental relationship links ${puzzle.categoryTitle}?`;
+    if (hintStep === 2) return `Consider the underlying rule: ${puzzle.visualHint}`;
+    return `Observe the logic carefully: ${puzzle.explanation}`;
+  } else if (personaType === 'snarky') {
+    if (hintStep === 1) return `Really? Overthinking a simple ${puzzle.categoryTitle} puzzle already?`;
+    if (hintStep === 2) return `Fine, here is a bone: ${puzzle.visualHint}`;
+    return `If you miss this now, my neural circuits will facepalm: ${puzzle.explanation}`;
+  } else {
+    if (hintStep === 1) return `Breathe. Observe the flow within ${puzzle.categoryTitle}.`;
+    if (hintStep === 2) return `Harmony appears when you align with: ${puzzle.visualHint}`;
+    return `The truth manifests in: ${puzzle.explanation}`;
+  }
+}
+
 export async function fetchLiveGeminiConnectionsPuzzle(
   topicPrompt: string,
   apiKey?: string
@@ -131,8 +189,8 @@ export async function fetchLiveGeminiConnectionsPuzzle(
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeKey}`;
 
     const promptText = `Generate a 16-tile NYT Connections style puzzle themed around "${topicPrompt}".
+Enforce MULTI-CATEGORY OVERLAP: exactly 5 or 6 tiles must plausibly fit 2 categories as clever decoy traps, but ensure exactly 1 unique partition resolves all 4 groups of size 4.
 Return strictly valid JSON with 4 distinct categories (4 tiles each).
-Difficulty tiers must be "yellow" (easiest), "green" (medium), "blue" (hard), "purple" (mind-bending/tricky).
 Output JSON schema:
 {
   "title": "AI STUDIO: ${topicPrompt.toUpperCase()}",
@@ -207,7 +265,6 @@ Output JSON schema:
 
 export function generateAIConnectionsPuzzle(topicPrompt?: string, seed?: number): ConnectionsPuzzle {
   const rng = new SeededRandom(seed);
-
   let chosenPreset = AI_PRESET_PUZZLES[0];
 
   if (topicPrompt && topicPrompt.trim().length > 0) {
