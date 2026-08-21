@@ -10,6 +10,11 @@ import { generateSyllogismPuzzle } from './categories/syllogisms';
 import { generateSciencePuzzle } from './categories/science';
 import { generateVerbalAnalogyPuzzle } from './categories/verbalAnalogies';
 import { generateMathLogicPuzzle } from './categories/mathLogic';
+import { generateMythosPuzzle } from './categories/mythosHistory';
+import { generateCinemaPuzzle } from './categories/cinemaPopCulture';
+import { generateLateralPuzzle } from './categories/lateralThinking';
+import { generateInventionPuzzle } from './categories/inventionsDiscovery';
+import { generateWordOriginPuzzle } from './categories/wordOrigins';
 
 export function generateAptitudePuzzle(
   levelNumber: number,
@@ -34,6 +39,11 @@ export function generateAptitudePuzzle(
     'science',
     'verbal_analogy',
     'math_logic',
+    'mythos_history',
+    'cinema_pop',
+    'lateral_thinking',
+    'inventions_discovery',
+    'word_origins',
   ];
   const selectedCategory = category ?? categories[(levelNumber - 1) % categories.length];
 
@@ -70,6 +80,21 @@ export function generateAptitudePuzzle(
     case 'math_logic':
       puzzle = generateMathLogicPuzzle(difficulty, rng, seenIds);
       break;
+    case 'mythos_history':
+      puzzle = generateMythosPuzzle(difficulty, rng, seenIds);
+      break;
+    case 'cinema_pop':
+      puzzle = generateCinemaPuzzle(difficulty, rng, seenIds);
+      break;
+    case 'lateral_thinking':
+      puzzle = generateLateralPuzzle(difficulty, rng, seenIds);
+      break;
+    case 'inventions_discovery':
+      puzzle = generateInventionPuzzle(difficulty, rng, seenIds);
+      break;
+    case 'word_origins':
+      puzzle = generateWordOriginPuzzle(difficulty, rng, seenIds);
+      break;
     default:
       puzzle = generateGeographyPuzzle(difficulty, rng);
       break;
@@ -77,4 +102,26 @@ export function generateAptitudePuzzle(
 
   puzzle.levelNumber = levelNumber;
   return puzzle;
+}
+
+export function generateEscalatingQuestion(stageIndex: number, seenIds: string[] = []): AptitudePuzzle {
+  const categories: AptitudeCategory[] = [
+    'mythos_history',
+    'cinema_pop',
+    'lateral_thinking',
+    'inventions_discovery',
+    'word_origins',
+    'geography',
+    'science',
+    'verbal_analogy',
+    'math_logic',
+    'cipher',
+    'series',
+    'syllogism',
+  ];
+
+  const rng = new SeededRandom(Date.now() + stageIndex * 9999);
+  const cat = rng.pick(categories);
+
+  return generateAptitudePuzzle(stageIndex, cat, rng.range(10000, 99999), seenIds);
 }

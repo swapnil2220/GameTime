@@ -1,7 +1,7 @@
 import React from 'react';
 import type { UserProfile } from '../types/game';
 import { AudioToggle } from './AudioToggle';
-import { Zap, Trophy, HelpCircle, User, Flame, Sparkles, Brain, Swords } from 'lucide-react';
+import { Zap, Trophy, HelpCircle, Flame, Sparkles, Brain, Swords, Crown } from 'lucide-react';
 
 interface NavbarProps {
   activeUser: UserProfile;
@@ -10,6 +10,7 @@ interface NavbarProps {
   onOpenAIStudio: () => void;
   onOpenMindMatrix: () => void;
   onStartBlitz: () => void;
+  onStartKBC: () => void;
   onStartGhostDuel: () => void;
   onOpenAuth: () => void;
   audioEnabled: boolean;
@@ -23,6 +24,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenAIStudio,
   onOpenMindMatrix,
   onStartBlitz,
+  onStartKBC,
   onStartGhostDuel,
   onOpenAuth,
   audioEnabled,
@@ -61,40 +63,49 @@ export const Navbar: React.FC<NavbarProps> = ({
           <span>{activeUser.dailyStreak} DAY STREAK</span>
         </div>
 
+        {/* KBC Grand Ladder Button */}
+        <button
+          onClick={onStartKBC}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-mono border bg-gradient-to-r from-amber-950/90 via-orange-950/90 to-purple-950/90 border-amber-400 text-amber-300 hover:scale-105 shadow-[0_0_15px_rgba(245,158,11,0.3)] transition-all"
+        >
+          <Crown className="w-4 h-4 text-amber-400 fill-amber-400/20" />
+          <span className="hidden sm:inline font-black">GRAND LADDER</span>
+        </button>
+
         {/* Ghost Duel PvP Button */}
         <button
           onClick={onStartGhostDuel}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-mono border bg-gradient-to-r from-amber-950/90 to-purple-950/90 border-amber-400/80 text-amber-300 hover:scale-105 shadow-[0_0_15px_rgba(245,158,11,0.25)] transition-all"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-mono border bg-slate-900 border-amber-500/40 text-amber-300 hover:scale-105 transition-all"
         >
           <Swords className="w-4 h-4 text-amber-400" />
-          <span className="hidden sm:inline font-black">GHOST DUEL</span>
+          <span className="hidden md:inline font-bold">DUELS</span>
         </button>
 
         {/* Speed Blitz Mode Button */}
         <button
           onClick={onStartBlitz}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-mono border bg-gradient-to-r from-red-950/80 via-amber-950/80 to-orange-950/80 border-amber-400 text-amber-300 hover:scale-105 shadow-[0_0_15px_rgba(245,158,11,0.3)] transition-all"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-mono border bg-slate-900 border-amber-400/60 text-amber-300 hover:scale-105 transition-all"
         >
           <Zap className="w-4 h-4 text-amber-400 fill-amber-400" />
-          <span className="hidden sm:inline font-extrabold">SPEED BLITZ</span>
+          <span className="hidden md:inline font-bold">BLITZ</span>
         </button>
 
         {/* Mind Matrix Button */}
         <button
           onClick={onOpenMindMatrix}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-mono border bg-cyan-950/80 border-cyan-400/60 text-cyan-300 hover:border-cyan-300 shadow-[0_0_15px_rgba(0,243,255,0.2)] transition-all"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-mono border bg-cyan-950/80 border-cyan-400/60 text-cyan-300 hover:border-cyan-300 transition-all"
         >
           <Brain className="w-4 h-4 text-cyan-400" />
-          <span className="hidden sm:inline font-bold">MATRIX</span>
+          <span className="hidden lg:inline font-bold">MATRIX</span>
         </button>
 
         {/* AI Custom Studio Button */}
         <button
           onClick={onOpenAIStudio}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-mono border bg-gradient-to-r from-purple-950/80 to-pink-950/80 border-purple-400 text-purple-300 hover:scale-105 shadow-[0_0_15px_rgba(168,85,247,0.25)] transition-all"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-mono border bg-purple-950/80 border-purple-400 text-purple-300 hover:scale-105 transition-all"
         >
           <Sparkles className="w-4 h-4 text-purple-400 fill-purple-400/20" />
-          <span className="hidden md:inline">AI STUDIO</span>
+          <span className="hidden lg:inline">AI STUDIO</span>
         </button>
 
         {/* How to Play button */}
@@ -124,7 +135,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           <span className="text-xs font-mono font-bold max-w-[80px] truncate hidden sm:inline">
             {activeUser.username}
           </span>
-          <User className="w-3.5 h-3.5 text-purple-400" />
         </button>
 
         <AudioToggle enabled={audioEnabled} onChange={onAudioToggle} />

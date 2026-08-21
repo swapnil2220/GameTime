@@ -9,6 +9,7 @@ import { LevelSelect } from './components/LevelSelect';
 import { ConnectionsGrid } from './components/ConnectionsGrid';
 import { PuzzleRunner } from './components/PuzzleRunner';
 import { BlitzRunner } from './components/BlitzRunner';
+import { KBCRunner } from './components/KBCRunner';
 import { GhostDuelModal } from './components/GhostDuelModal';
 import { MindMatrixModal } from './components/MindMatrixModal';
 import { ResultModal } from './components/ResultModal';
@@ -77,6 +78,10 @@ export function App() {
     setViewState('blitz_playing');
   };
 
+  const handleStartKBC = () => {
+    setViewState('kbc_playing');
+  };
+
   const handleStartGhostDuel = () => {
     setViewState('ghost_duel');
   };
@@ -117,6 +122,7 @@ export function App() {
         onOpenAIStudio={() => setIsAIStudioOpen(true)}
         onOpenMindMatrix={() => setIsMindMatrixOpen(true)}
         onStartBlitz={handleStartBlitz}
+        onStartKBC={handleStartKBC}
         onStartGhostDuel={handleStartGhostDuel}
         onOpenAuth={() => setIsAuthOpen(true)}
         audioEnabled={audioEnabled}
@@ -132,6 +138,7 @@ export function App() {
             onSelectLevel={handleSelectLevel}
             onStartDailyAIChallenge={handleStartDailyAI}
             onStartBlitz={handleStartBlitz}
+            onStartKBC={handleStartKBC}
             onStartGhostDuel={handleStartGhostDuel}
             onOpenMindMatrix={() => setIsMindMatrixOpen(true)}
             onOpenAIStudio={() => setIsAIStudioOpen(true)}
@@ -170,6 +177,17 @@ export function App() {
             activeUser={activeUser}
             onUserUpdated={handleUserUpdated}
             onComboChange={setComboStreak}
+            onBackToMap={() => {
+              setComboStreak(0);
+              setViewState('level_select');
+            }}
+          />
+        )}
+
+        {viewState === 'kbc_playing' && (
+          <KBCRunner
+            activeUser={activeUser}
+            onUserUpdated={handleUserUpdated}
             onBackToMap={() => {
               setComboStreak(0);
               setViewState('level_select');

@@ -9,7 +9,12 @@ export type AptitudeCategory =
   | 'syllogism'
   | 'science'
   | 'verbal_analogy'
-  | 'math_logic';
+  | 'math_logic'
+  | 'mythos_history'
+  | 'cinema_pop'
+  | 'lateral_thinking'
+  | 'inventions_discovery'
+  | 'word_origins';
 
 export type DifficultyTier = 'beginner' | 'intermediate' | 'expert';
 
@@ -111,6 +116,27 @@ export interface GhostRunData {
 
 export type AudioTheme = 'cyberpunk' | 'zen' | 'typewriter';
 
+export type LifelineId = 'fifty_fifty' | 'ai_expert' | 'audience_poll' | 'flip_question';
+
+export interface LadderTier {
+  stage: number;
+  prizePts: number;
+  prizeLabel: string;
+  isSafeHaven: boolean;
+  timerSec: number | null;
+}
+
+export interface AudiencePollResult {
+  percentages: Record<string, number>;
+}
+
+export interface AIExpertRecommendation {
+  optionId: string;
+  optionContent: string;
+  confidenceScore: number;
+  explanation: string;
+}
+
 export interface UserProfile {
   id: string;
   username: string;
@@ -123,6 +149,8 @@ export interface UserProfile {
   seenQuestionIds?: string[];
   mindMatrix: MindMatrixStats;
   blitzHighScore: number;
+  kbcHighPrize?: number;
+  kbcPerfectRuns?: number;
   activeRelics?: RelicModifierId[];
   preferredPersona?: AIPersonaType;
   audioTheme?: AudioTheme;
@@ -135,6 +163,7 @@ export type ViewState =
   | 'playing'
   | 'connections_playing'
   | 'blitz_playing'
+  | 'kbc_playing'
   | 'ghost_duel'
   | 'result'
   | 'leaderboard';

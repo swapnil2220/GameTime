@@ -69,7 +69,6 @@ class SoundEngine {
       return;
     }
 
-    // Default Cyberpunk
     const osc = this.ctx.createOscillator();
     const filter = this.ctx.createBiquadFilter();
     const gain = this.ctx.createGain();
@@ -96,39 +95,6 @@ class SoundEngine {
     const freq = this.PENTATONIC_SCALE[noteIdx];
     const now = this.ctx.currentTime;
 
-    if (this.theme === 'typewriter') {
-      // Typewriter bell chime
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(1760, now); // A6 bell
-      gain.gain.setValueAtTime(0.3, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.3);
-      this.triggerHaptic([15, 30, 15]);
-      return;
-    }
-
-    if (this.theme === 'zen') {
-      // Singing bowl / Marimba sine tone
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq * 0.75, now);
-      gain.gain.setValueAtTime(0.25, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.4);
-      this.triggerHaptic([15, 30, 15]);
-      return;
-    }
-
-    // FM Synthesis for Cyberpunk Mode
     const carrier = this.ctx.createOscillator();
     const modulator = this.ctx.createOscillator();
     const modGain = this.ctx.createGain();
@@ -138,7 +104,7 @@ class SoundEngine {
     modulator.type = 'sine';
 
     carrier.frequency.setValueAtTime(freq, now);
-    modulator.frequency.setValueAtTime(freq * 2, now); // 2:1 ratio FM
+    modulator.frequency.setValueAtTime(freq * 2, now);
     modGain.gain.setValueAtTime(freq * 1.5, now);
 
     modulator.connect(modGain);
@@ -193,56 +159,122 @@ class SoundEngine {
     this.triggerHaptic([25, 40, 25, 40]);
   }
 
-  public playWrong() {
+  public playHeartbeatPulse() {
     if (!this.enabled) return;
     this.initCtx();
     if (!this.ctx) return;
 
     const now = this.ctx.currentTime;
-
-    // Sub-bass drop error effect
     const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(60, now);
+    osc.frequency.exponentialRampToValueAtTime(30, now + 0.12);
+
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.12);
+  }
+
+  public playSuspenseChord() {
+    if (!this.enabled) return;
+    this.initCtx();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+    const osc1 = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc1.type = 'sawtooth';
+    osc2.type = 'sine';
+
+    osc1.frequency.setValueAtTime(130.81, now); // C3
+    osc2.frequency.setValueAtTime(185.00, now); // F#3 (Tritone devil interval)
+
+    gain.gain.setValueAtTime(0.18, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 1.2);
+
+    osc1.connect(gain);
+    osc2.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + 1.2);
+
+    this.triggerHaptic([30, 50, 30]);
+  }
+
+  public playBrassTriumph() {
+    if (!this.enabled) return;
+    this.initCtx();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5 - E5 - G5 - C6 Major Fanfare
+    notes.forEach((freq, idx) => {
+      const osc = this.ctx!.createOscillator();
+      const gain = this.ctx!.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, now + idx * 0.1);
+
+      gain.gain.setValueAtTime(0.2, now + idx * 0.1);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.1 + 0.4);
+
+      osc.connect(gain);
+      gain.connect(this.ctx!.destination);
+
+      osc.start(now + idx * 0.1);
+      osc.stop(now + idx * 0.1 + 0.4);
+    });
+
+    this.triggerHaptic([40, 80, 40, 80]);
+  }
+
+  public playHollowDrone() {
+    if (!this.enabled) return;
+    this.initCtx();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const filter = this.ctx.createBiquadFilter();
     const gain = this.ctx.createGain();
 
     osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(120, now);
-    osc.frequency.exponentialRampToValueAtTime(40, now + 0.35); // Sub-bass drop
+    osc.frequency.setValueAtTime(80, now);
+    osc.frequency.linearRampToValueAtTime(40, now + 1.5);
 
-    gain.gain.setValueAtTime(0.3, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(200, now);
 
-    osc.connect(gain);
+    gain.gain.setValueAtTime(0.35, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+
+    osc.connect(filter);
+    filter.connect(gain);
     gain.connect(this.ctx.destination);
 
     osc.start(now);
-    osc.stop(now + 0.35);
+    osc.stop(now + 1.5);
 
-    this.triggerHaptic([40, 60, 40]);
+    this.triggerHaptic([100, 150, 100]);
   }
 
-  public playTickWarning() {
-    if (!this.enabled) return;
-    this.initCtx();
-    if (!this.ctx) return;
-
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(880, now);
-    gain.gain.setValueAtTime(0.08, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
-
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-
-    osc.start(now);
-    osc.stop(now + 0.03);
+  public playWrong() {
+    this.playHollowDrone();
   }
 
   public playOverdrive() {
-    this.playDualToneChord();
+    this.playBrassTriumph();
   }
 }
 
