@@ -5,8 +5,6 @@ class SoundEngine {
   public enabled: boolean = true;
   public theme: AudioTheme = 'cyberpunk';
 
-  private PENTATONIC_SCALE = [261.63, 293.66, 329.63, 392.0, 440.0, 523.25, 659.25, 783.99, 1046.5];
-
   private initCtx() {
     if (!this.ctx && typeof window !== 'undefined') {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
@@ -15,7 +13,7 @@ class SoundEngine {
       }
     }
     if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume();
+      this.ctx.resume().catch(() => {});
     }
   }
 
@@ -59,107 +57,109 @@ class SoundEngine {
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(320, now);
-      gain.gain.setValueAtTime(0.1, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+      osc.frequency.setValueAtTime(329.63, now);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
       osc.start(now);
-      osc.stop(now + 0.08);
+      osc.stop(now + 0.15);
       return;
     }
 
     // Default Cyberpunk
     const osc = this.ctx.createOscillator();
-    const filter = this.ctx.createBiquadFilter();
     const gain = this.ctx.createGain();
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(500, now);
-    osc.frequency.exponentialRampToValueAtTime(200, now + 0.04);
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(1000, now);
-    gain.gain.setValueAtTime(0.15, now);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(800, now);
+    osc.frequency.exponentialRampToValueAtTime(400, now + 0.04);
+    gain.gain.setValueAtTime(0.2, now);
     gain.gain.exponentialRampToValueAtTime(0.01, now + 0.04);
-    osc.connect(filter);
-    filter.connect(gain);
+    osc.connect(gain);
     gain.connect(this.ctx.destination);
     osc.start(now);
     osc.stop(now + 0.04);
   }
 
-  public playComboNote(comboStreak: number = 1) {
+  public playCorrect() {
     if (!this.enabled) return;
     this.initCtx();
     if (!this.ctx) return;
 
-    const noteIdx = Math.min(this.PENTATONIC_SCALE.length - 1, (comboStreak - 1) % this.PENTATONIC_SCALE.length);
-    const freq = this.PENTATONIC_SCALE[noteIdx];
+    this.triggerHaptic([20, 50, 20]);
     const now = this.ctx.currentTime;
 
-    if (this.theme === 'typewriter') {
-      // Typewriter bell chime
+    const freqs = this.theme === 'zen' ? [329.63, 440.0, 523.25] : [523.25, 659.25, 783.99];
+
+    freqs.forEach((f, i) => {
+      if (!this.ctx) return;
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(1760, now); // A6 bell
-      gain.gain.setValueAtTime(0.3, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+      osc.type = this.theme === 'zen' ? 'sine' : 'triangle';
+      osc.frequency.setValueAtTime(f, now + i * 0.08);
+
+      gain.gain.setValueAtTime(0, now + i * 0.08);
+      gain.gain.linearRampToValueAtTime(0.25, now + i * 0.08 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.25);
+
       osc.connect(gain);
       gain.connect(this.ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.3);
-      this.triggerHaptic([15, 30, 15]);
-      return;
-    }
 
-    if (this.theme === 'zen') {
-      // Singing bowl / Marimba sine tone
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq * 0.75, now);
-      gain.gain.setValueAtTime(0.25, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.4);
-      this.triggerHaptic([15, 30, 15]);
-      return;
-    }
-
-    // FM Synthesis for Cyberpunk Mode
-    const carrier = this.ctx.createOscillator();
-    const modulator = this.ctx.createOscillator();
-    const modGain = this.ctx.createGain();
-    const mainGain = this.ctx.createGain();
-
-    carrier.type = 'triangle';
-    modulator.type = 'sine';
-
-    carrier.frequency.setValueAtTime(freq, now);
-    modulator.frequency.setValueAtTime(freq * 2, now); // 2:1 ratio FM
-    modGain.gain.setValueAtTime(freq * 1.5, now);
-
-    modulator.connect(modGain);
-    modGain.connect(carrier.frequency);
-
-    mainGain.gain.setValueAtTime(0.22, now);
-    mainGain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
-
-    carrier.connect(mainGain);
-    mainGain.connect(this.ctx.destination);
-
-    carrier.start(now);
-    modulator.start(now);
-    carrier.stop(now + 0.25);
-    modulator.stop(now + 0.25);
-
-    this.triggerHaptic([15, 30, 15]);
+      osc.start(now + i * 0.08);
+      osc.stop(now + i * 0.08 + 0.25);
+    });
   }
 
-  public playCorrect() {
-    this.playComboNote(1);
+  public playWrong() {
+    if (!this.enabled) return;
+    this.initCtx();
+    if (!this.ctx) return;
+
+    this.triggerHaptic([100, 50, 100]);
+    const now = this.ctx.currentTime;
+
+    // Sub-bass drop
+    const subOsc = this.ctx.createOscillator();
+    const subGain = this.ctx.createGain();
+    subOsc.type = 'sawtooth';
+    subOsc.frequency.setValueAtTime(150, now);
+    subOsc.frequency.exponentialRampToValueAtTime(40, now + 0.35);
+
+    subGain.gain.setValueAtTime(0.3, now);
+    subGain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+
+    subOsc.connect(subGain);
+    subGain.connect(this.ctx.destination);
+
+    subOsc.start(now);
+    subOsc.stop(now + 0.35);
+  }
+
+  public playOverdrive() {
+    if (!this.enabled) return;
+    this.initCtx();
+    if (!this.ctx) return;
+
+    this.triggerHaptic([30, 30, 30, 30, 80]);
+    const now = this.ctx.currentTime;
+    const notes = [523.25, 659.25, 783.99, 1046.5];
+
+    notes.forEach((f, i) => {
+      if (!this.ctx) return;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(f, now + i * 0.06);
+
+      gain.gain.setValueAtTime(0.2, now + i * 0.06);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.06 + 0.3);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(now + i * 0.06);
+      osc.stop(now + i * 0.06 + 0.3);
+    });
   }
 
   public playDualToneChord() {
@@ -168,81 +168,23 @@ class SoundEngine {
     if (!this.ctx) return;
 
     const now = this.ctx.currentTime;
-    const osc1 = this.ctx.createOscillator();
-    const osc2 = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
+    [440.0, 554.37, 659.25].forEach((f) => {
+      if (!this.ctx) return;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(f, now);
 
-    osc1.type = 'sine';
-    osc2.type = 'triangle';
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.15, now + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
 
-    osc1.frequency.setValueAtTime(523.25, now);
-    osc2.frequency.setValueAtTime(783.99, now);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
 
-    gain.gain.setValueAtTime(0.25, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
-
-    osc1.connect(gain);
-    osc2.connect(gain);
-    gain.connect(this.ctx.destination);
-
-    osc1.start(now);
-    osc2.start(now);
-    osc1.stop(now + 0.5);
-    osc2.stop(now + 0.5);
-
-    this.triggerHaptic([25, 40, 25, 40]);
-  }
-
-  public playWrong() {
-    if (!this.enabled) return;
-    this.initCtx();
-    if (!this.ctx) return;
-
-    const now = this.ctx.currentTime;
-
-    // Sub-bass drop error effect
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(120, now);
-    osc.frequency.exponentialRampToValueAtTime(40, now + 0.35); // Sub-bass drop
-
-    gain.gain.setValueAtTime(0.3, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
-
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-
-    osc.start(now);
-    osc.stop(now + 0.35);
-
-    this.triggerHaptic([40, 60, 40]);
-  }
-
-  public playTickWarning() {
-    if (!this.enabled) return;
-    this.initCtx();
-    if (!this.ctx) return;
-
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(880, now);
-    gain.gain.setValueAtTime(0.08, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
-
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-
-    osc.start(now);
-    osc.stop(now + 0.03);
-  }
-
-  public playOverdrive() {
-    this.playDualToneChord();
+      osc.start(now);
+      osc.stop(now + 0.8);
+    });
   }
 }
 
