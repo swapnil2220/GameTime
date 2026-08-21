@@ -152,15 +152,20 @@ export const PuzzleRunner: React.FC<PuzzleRunnerProps> = ({
           />
         );
       case 'sports':
+      case 'cinema':
+      case 'word_origins':
+      case 'history':
+      case 'inventions':
+      case 'lateral':
         return (
           <SportsView
             data={
               puzzle.renderedData.questionText
                 ? puzzle.renderedData
                 : {
-                    sportName: 'Sports Arena',
-                    questionText: 'Identify the correct sports rule or terminology below:',
-                    icon: '🏆',
+                    sportName: puzzle.categoryTitle,
+                    questionText: 'Identify the correct answer below:',
+                    icon: '🧠',
                     correctAnswer: '',
                     distractors: [],
                     explanation: '',

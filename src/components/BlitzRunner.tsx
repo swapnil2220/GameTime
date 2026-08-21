@@ -40,7 +40,7 @@ export const BlitzRunner: React.FC<BlitzRunnerProps> = ({
   const [totalResponseTimeMs, setTotalResponseTimeMs] = useState<number>(0);
 
   const [puzzle, setPuzzle] = useState<AptitudePuzzle>(() =>
-    generateAptitudePuzzle(Math.floor(Math.random() * 20) + 1, undefined, undefined, activeUser.seenQuestionIds || [])
+    generateAptitudePuzzle(Math.floor(Math.random() * 25) + 1, undefined, undefined, activeUser.seenQuestionIds || [])
   );
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [showHint, setShowHint] = useState(false);
@@ -189,15 +189,20 @@ export const BlitzRunner: React.FC<BlitzRunnerProps> = ({
           />
         );
       case 'sports':
+      case 'cinema':
+      case 'word_origins':
+      case 'history':
+      case 'inventions':
+      case 'lateral':
         return (
           <SportsView
             data={
               puzzle.renderedData.questionText
                 ? puzzle.renderedData
                 : {
-                    sportName: 'Sports Arena',
-                    questionText: 'Identify the correct sports rule or terminology below:',
-                    icon: '🏆',
+                    sportName: puzzle.categoryTitle,
+                    questionText: 'Identify the correct answer below:',
+                    icon: '🧠',
                     correctAnswer: '',
                     distractors: [],
                     explanation: '',

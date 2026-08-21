@@ -10,6 +10,11 @@ import { generateSyllogismPuzzle } from './categories/syllogisms';
 import { generateSciencePuzzle } from './categories/science';
 import { generateVerbalAnalogyPuzzle } from './categories/verbalAnalogies';
 import { generateMathLogicPuzzle } from './categories/mathLogic';
+import { generateCinemaPuzzle } from './categories/cinema';
+import { generateWordOriginsPuzzle } from './categories/wordOrigins';
+import { generateHistoryPuzzle } from './categories/history';
+import { generateInventionsPuzzle } from './categories/inventions';
+import { generateLateralPuzzle } from './categories/lateral';
 
 export function generateAptitudePuzzle(
   levelNumber: number,
@@ -34,8 +39,17 @@ export function generateAptitudePuzzle(
     'science',
     'verbal_analogy',
     'math_logic',
+    'cinema',
+    'word_origins',
+    'history',
+    'inventions',
+    'lateral',
   ];
-  const selectedCategory = category ?? categories[(levelNumber - 1) % categories.length];
+
+  // Rotate through 15 categories using level number and random seed offset so levels 1, 11, 21 draw different categories
+  const categoryOffset = rng.range(0, categories.length - 1);
+  const categoryIndex = (levelNumber - 1 + categoryOffset) % categories.length;
+  const selectedCategory = category ?? categories[categoryIndex];
 
   let puzzle: AptitudePuzzle;
 
@@ -69,6 +83,21 @@ export function generateAptitudePuzzle(
       break;
     case 'math_logic':
       puzzle = generateMathLogicPuzzle(difficulty, rng, seenIds);
+      break;
+    case 'cinema':
+      puzzle = generateCinemaPuzzle(difficulty, rng, seenIds);
+      break;
+    case 'word_origins':
+      puzzle = generateWordOriginsPuzzle(difficulty, rng, seenIds);
+      break;
+    case 'history':
+      puzzle = generateHistoryPuzzle(difficulty, rng, seenIds);
+      break;
+    case 'inventions':
+      puzzle = generateInventionsPuzzle(difficulty, rng, seenIds);
+      break;
+    case 'lateral':
+      puzzle = generateLateralPuzzle(difficulty, rng, seenIds);
       break;
     default:
       puzzle = generateGeographyPuzzle(difficulty, rng, seenIds);

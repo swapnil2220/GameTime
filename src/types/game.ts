@@ -9,7 +9,12 @@ export type AptitudeCategory =
   | 'syllogism'
   | 'science'
   | 'verbal_analogy'
-  | 'math_logic';
+  | 'math_logic'
+  | 'cinema'
+  | 'word_origins'
+  | 'history'
+  | 'inventions'
+  | 'lateral';
 
 export type DifficultyTier = 'beginner' | 'intermediate' | 'expert';
 

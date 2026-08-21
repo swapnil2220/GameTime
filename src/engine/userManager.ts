@@ -32,7 +32,7 @@ export function createDefaultMindMatrix(): MindMatrixStats {
 export function createDefaultLevels(): LevelProgress[] {
   return Array.from({ length: 30 }).map((_, i) => ({
     levelNumber: i + 1,
-    unlocked: i === 0,
+    unlocked: true,
     completed: false,
     stars: 0,
     bestTimeSec: null,
@@ -49,6 +49,13 @@ function sanitizeUser(user: any): UserProfile {
   }
   if (!user.seenQuestionIds) {
     user.seenQuestionIds = [];
+  }
+  if (!user.levelProgress || !Array.isArray(user.levelProgress) || user.levelProgress.length < 30) {
+    user.levelProgress = createDefaultLevels();
+  } else {
+    user.levelProgress.forEach((l: any) => {
+      l.unlocked = true;
+    });
   }
   return user as UserProfile;
 }
@@ -165,6 +172,11 @@ export function switchOrRegisterUser(usernameInput: string, avatar: string, isGu
     existing.avatar = avatar;
     if (!existing.seenQuestionIds) existing.seenQuestionIds = [];
     if (!existing.mindMatrix) existing.mindMatrix = createDefaultMindMatrix();
+    if (!existing.levelProgress || existing.levelProgress.length < 30) {
+      existing.levelProgress = createDefaultLevels();
+    } else {
+      existing.levelProgress.forEach((l) => (l.unlocked = true));
+    }
   }
 
   saveAllUsers(users);
