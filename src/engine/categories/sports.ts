@@ -149,8 +149,13 @@ const SPORTS_QUESTIONS: SportsQuestionData[] = [
   },
 ];
 
-export function generateSportsPuzzle(difficulty: DifficultyTier, rng: SeededRandom): AptitudePuzzle {
-  const item = rng.pick(SPORTS_QUESTIONS);
+export function generateSportsPuzzle(
+  difficulty: DifficultyTier,
+  rng: SeededRandom,
+  seenIds: string[] = []
+): AptitudePuzzle {
+  const available = SPORTS_QUESTIONS.filter((s) => !seenIds.includes(`sports_${s.sportName.toLowerCase()}`));
+  const item = available.length > 0 ? rng.pick(available) : rng.pick(SPORTS_QUESTIONS);
 
   const rawOptions: Option[] = [
     { id: 'opt_c', content: item.correctAnswer, isCorrect: true },
@@ -160,7 +165,6 @@ export function generateSportsPuzzle(difficulty: DifficultyTier, rng: SeededRand
     rawOptions.push({ id: `opt_d_${i}`, content: d, isCorrect: false });
   });
 
-  // Guarantee unique options
   const options: Option[] = [];
   const seen = new Set<string>();
 
@@ -171,7 +175,6 @@ export function generateSportsPuzzle(difficulty: DifficultyTier, rng: SeededRand
     }
   }
 
-  // Fallback guard to guarantee 4 options
   const fallbackValues = ['1 Point', '5 Points', '10 Points', 'Red Card', 'Whistle'];
   let extra = 0;
   while (options.length < 4 && extra < fallbackValues.length) {
@@ -183,7 +186,7 @@ export function generateSportsPuzzle(difficulty: DifficultyTier, rng: SeededRand
   }
 
   return {
-    id: `sports_${Date.now()}_${rng.range(100, 999)}`,
+    id: `sports_${item.sportName.toLowerCase()}_${Date.now()}`,
     category: 'sports',
     categoryTitle: 'Sports & World Arena',
     difficulty,

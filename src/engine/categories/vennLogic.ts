@@ -71,7 +71,7 @@ const VENN_DATASET: VennQuestionData[] = [
   },
 ];
 
-export function generateVennPuzzle(difficulty: DifficultyTier, rng: SeededRandom): AptitudePuzzle {
+export function generateVennPuzzle(difficulty: DifficultyTier, rng: SeededRandom, _seenIds: string[] = []): AptitudePuzzle {
   const pickedData = rng.pick(VENN_DATASET);
 
   const rawOptions: Option[] = [

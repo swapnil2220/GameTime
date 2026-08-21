@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { ViewState, UserProfile, ConnectionsPuzzle, GhostRunData } from './types/game';
-import { getActiveUser, updateUserLevelProgress, saveAllUsers, getAllUsers } from './engine/userManager';
+import { getActiveUser, updateUserLevelProgress, updateNonCampaignScore, saveAllUsers, getAllUsers } from './engine/userManager';
 import { generateAIConnectionsPuzzle } from './engine/aiEngine';
 import { importGhostRunFromBase64 } from './components/GhostDuelModal';
 import { Navbar } from './components/Navbar';
@@ -9,7 +9,6 @@ import { LevelSelect } from './components/LevelSelect';
 import { ConnectionsGrid } from './components/ConnectionsGrid';
 import { PuzzleRunner } from './components/PuzzleRunner';
 import { BlitzRunner } from './components/BlitzRunner';
-import { KBCRunner } from './components/KBCRunner';
 import { GhostDuelModal } from './components/GhostDuelModal';
 import { MindMatrixModal } from './components/MindMatrixModal';
 import { ResultModal } from './components/ResultModal';
@@ -25,6 +24,7 @@ export function App() {
   const [activeLevelNumber, setActiveLevelNumber] = useState<number>(1);
   const [comboStreak, setComboStreak] = useState<number>(0);
   const [audioEnabled, setAudioEnabled] = useState(true);
+  const [isConnectionsResult, setIsConnectionsResult] = useState(false);
 
   const [isHowToPlayOpen, setIsHowToPlayOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -65,42 +65,45 @@ export function App() {
 
   const handleSelectLevel = (lvlNum: number) => {
     setActiveLevelNumber(lvlNum);
+    setIsConnectionsResult(false);
     setViewState('playing');
   };
 
   const handleStartDailyAI = () => {
     const puzzle = generateAIConnectionsPuzzle();
     setActiveConnectionsPuzzle(puzzle);
+    setIsConnectionsResult(true);
     setViewState('connections_playing');
   };
 
   const handleStartBlitz = () => {
+    setIsConnectionsResult(false);
     setViewState('blitz_playing');
   };
 
-  const handleStartKBC = () => {
-    setViewState('kbc_playing');
-  };
-
   const handleStartGhostDuel = () => {
+    setIsConnectionsResult(false);
     setViewState('ghost_duel');
   };
 
   const handleGenerateTopicPuzzle = (topicPrompt: string, livePuzzle?: ConnectionsPuzzle | null) => {
     const puzzle = livePuzzle || generateAIConnectionsPuzzle(topicPrompt);
     setActiveConnectionsPuzzle(puzzle);
+    setIsConnectionsResult(true);
     setViewState('connections_playing');
   };
 
   const handleCompleteConnections = (score: number, stars: number, emojiGrid: string) => {
     setLastResult({ stars, score, timeSec: 45, emojiGrid });
-    const updatedUser = updateUserLevelProgress(activeUser.id, activeLevelNumber, stars, score, 45);
+    setIsConnectionsResult(true);
+    const updatedUser = updateNonCampaignScore(activeUser.id, score);
     setActiveUser(updatedUser);
     setViewState('result');
   };
 
   const handleCompleteLevel = (stars: number, score: number, timeSec: number) => {
     setLastResult({ stars, score, timeSec });
+    setIsConnectionsResult(false);
     const updatedUser = updateUserLevelProgress(activeUser.id, activeLevelNumber, stars, score, timeSec);
     setActiveUser(updatedUser);
     setViewState('result');
@@ -122,7 +125,6 @@ export function App() {
         onOpenAIStudio={() => setIsAIStudioOpen(true)}
         onOpenMindMatrix={() => setIsMindMatrixOpen(true)}
         onStartBlitz={handleStartBlitz}
-        onStartKBC={handleStartKBC}
         onStartGhostDuel={handleStartGhostDuel}
         onOpenAuth={() => setIsAuthOpen(true)}
         audioEnabled={audioEnabled}
@@ -138,7 +140,6 @@ export function App() {
             onSelectLevel={handleSelectLevel}
             onStartDailyAIChallenge={handleStartDailyAI}
             onStartBlitz={handleStartBlitz}
-            onStartKBC={handleStartKBC}
             onStartGhostDuel={handleStartGhostDuel}
             onOpenMindMatrix={() => setIsMindMatrixOpen(true)}
             onOpenAIStudio={() => setIsAIStudioOpen(true)}
@@ -184,17 +185,6 @@ export function App() {
           />
         )}
 
-        {viewState === 'kbc_playing' && (
-          <KBCRunner
-            activeUser={activeUser}
-            onUserUpdated={handleUserUpdated}
-            onBackToMap={() => {
-              setComboStreak(0);
-              setViewState('level_select');
-            }}
-          />
-        )}
-
         {viewState === 'ghost_duel' && (
           <GhostDuelModal
             activeUser={activeUser}
@@ -213,11 +203,18 @@ export function App() {
               score={lastResult.score}
               timeSec={lastResult.timeSec}
               levelNumber={activeLevelNumber}
+              isConnectionsMode={isConnectionsResult}
               onNextLevel={() => {
                 setActiveLevelNumber((prev) => Math.min(30, prev + 1));
                 setViewState('playing');
               }}
-              onRetryLevel={() => setViewState('playing')}
+              onRetryLevel={() => {
+                if (isConnectionsResult) {
+                  setViewState('connections_playing');
+                } else {
+                  setViewState('playing');
+                }
+              }}
               onBackToMap={() => {
                 setComboStreak(0);
                 setViewState('level_select');

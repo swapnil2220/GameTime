@@ -11,7 +11,7 @@ export interface AnalogyShape {
 
 const COLORS = ['#00f3ff', '#a855f7', '#10b981', '#f59e0b', '#ec4899', '#3b82f6'];
 
-export function generateAnalogyPuzzle(difficulty: DifficultyTier, rng: SeededRandom): AptitudePuzzle {
+export function generateAnalogyPuzzle(difficulty: DifficultyTier, rng: SeededRandom, _seenIds: string[] = []): AptitudePuzzle {
   const outerShapes: AnalogyShape['outerShape'][] = ['circle', 'square', 'triangle', 'pentagon'];
   const innerShapes: AnalogyShape['innerShape'][] = ['star', 'diamond', 'cross', 'dot'];
 

@@ -5,7 +5,7 @@ const WORDS_BEGINNER = ['CODE', 'LINK', 'MIND', 'STAR', 'WAVE', 'PEAK'];
 const WORDS_INTERMEDIATE = ['NEXUS', 'GRID', 'FLOW', 'CYPHER', 'BEAM', 'PULSE'];
 const WORDS_EXPERT = ['ALGORITHM', 'ENCRYPTION', 'MATRIX', 'SPECTRUM', 'QUANTUM', 'VECTOR'];
 
-export function generateCipherPuzzle(difficulty: DifficultyTier, rng: SeededRandom): AptitudePuzzle {
+export function generateCipherPuzzle(difficulty: DifficultyTier, rng: SeededRandom, _seenIds: string[] = []): AptitudePuzzle {
   const pool = difficulty === 'beginner' ? WORDS_BEGINNER : difficulty === 'intermediate' ? WORDS_INTERMEDIATE : WORDS_EXPERT;
 
   const word1 = rng.pick(pool);

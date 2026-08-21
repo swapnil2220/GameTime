@@ -1,7 +1,7 @@
 import type { AptitudePuzzle, Option, DifficultyTier } from '../../types/game';
 import { SeededRandom } from '../seed';
 
-export function generateSeriesPuzzle(difficulty: DifficultyTier, rng: SeededRandom): AptitudePuzzle {
+export function generateSeriesPuzzle(difficulty: DifficultyTier, rng: SeededRandom, _seenIds: string[] = []): AptitudePuzzle {
   let sequence: number[] = [];
   let ruleText = '';
   let targetVal = 0;

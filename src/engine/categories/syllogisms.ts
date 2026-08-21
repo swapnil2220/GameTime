@@ -24,74 +24,47 @@ const SYLLOGISM_POOL: SyllogismData[] = [
   {
     premise1: 'All Robots are Machines.',
     premise2: 'Some Machines are Autonomous.',
-    question: 'Which statement is ALWAYS true based ONLY on the premises?',
+    question: 'What can be validly deduced?',
     correctConclusion: 'Some Machines are Robots.',
-    wrongConclusion1: 'All Robots are Autonomous.',
-    wrongConclusion2: 'No Machines are Robots.',
-    wrongConclusion3: 'All Autonomous items are Robots.',
+    wrongConclusion1: 'All Autonomous items are Robots.',
+    wrongConclusion2: 'No Robots are Autonomous.',
+    wrongConclusion3: 'All Robots are Autonomous.',
   },
   {
     premise1: 'No Reptiles have Feathers.',
     premise2: 'All Snakes are Reptiles.',
-    question: 'What follows logically?',
+    question: 'Which statement logically follows?',
     correctConclusion: 'No Snakes have Feathers.',
-    wrongConclusion1: 'Some Snakes have Feathers.',
-    wrongConclusion2: 'All Reptiles are Snakes.',
-    wrongConclusion3: 'Some Feathers are Snakes.',
+    wrongConclusion1: 'All Snakes have Feathers.',
+    wrongConclusion2: 'Some Snakes have Feathers.',
+    wrongConclusion3: 'All Feathers belong to Snakes.',
   },
   {
-    premise1: 'All Stars are Luminous Bodies.',
-    premise2: 'The Sun is a Star.',
-    question: 'What MUST be concluded?',
-    correctConclusion: 'The Sun is a Luminous Body.',
-    wrongConclusion1: 'All Luminous Bodies are Suns.',
-    wrongConclusion2: 'The Sun is not Luminous.',
-    wrongConclusion3: 'No Stars are Luminous.',
+    premise1: 'Some Scientists are Musicians.',
+    premise2: 'All Musicians are Artists.',
+    question: 'Which conclusion is guaranteed true?',
+    correctConclusion: 'Some Scientists are Artists.',
+    wrongConclusion1: 'All Artists are Scientists.',
+    wrongConclusion2: 'No Scientists are Artists.',
+    wrongConclusion3: 'All Scientists are Musicians.',
   },
   {
-    premise1: 'All Planets revolve around a Star.',
+    premise1: 'All Planets orbit a Star.',
     premise2: 'Earth is a Planet.',
-    question: 'Which conclusion MUST hold true?',
-    correctConclusion: 'Earth revolves around a Star.',
-    wrongConclusion1: 'All Stars revolve around Earth.',
-    wrongConclusion2: 'Earth does not revolve.',
-    wrongConclusion3: 'Some Planets do not revolve around Stars.',
+    question: 'What MUST be true?',
+    correctConclusion: 'Earth orbits a Star.',
+    wrongConclusion1: 'Stars orbit Earth.',
+    wrongConclusion2: 'Earth is a Star.',
+    wrongConclusion3: 'No Planets orbit Stars.',
   },
   {
-    premise1: 'No Mammals are Insects.',
-    premise2: 'All Whales are Mammals.',
-    question: 'Which statement MUST be true?',
-    correctConclusion: 'No Whales are Insects.',
-    wrongConclusion1: 'Some Whales are Insects.',
-    wrongConclusion2: 'All Insects are Mammals.',
-    wrongConclusion3: 'Some Mammals are Insects.',
-  },
-  {
-    premise1: 'All Diamonds are Minerals.',
-    premise2: 'All Minerals are Natural Solids.',
-    question: 'Which deduction is valid?',
-    correctConclusion: 'All Diamonds are Natural Solids.',
-    wrongConclusion1: 'All Natural Solids are Diamonds.',
-    wrongConclusion2: 'No Diamonds are Natural Solids.',
-    wrongConclusion3: 'Some Minerals are not Natural Solids.',
-  },
-  {
-    premise1: 'Some Coders are Photographers.',
-    premise2: 'All Photographers are Artists.',
-    question: 'What follows logically?',
-    correctConclusion: 'Some Coders are Artists.',
-    wrongConclusion1: 'All Coders are Artists.',
-    wrongConclusion2: 'No Coders are Artists.',
-    wrongConclusion3: 'All Artists are Photographers.',
-  },
-  {
-    premise1: 'All Squares are Rectangles.',
-    premise2: 'All Rectangles are Quadrilaterals.',
-    question: 'Which statement MUST be true?',
-    correctConclusion: 'All Squares are Quadrilaterals.',
-    wrongConclusion1: 'All Quadrilaterals are Squares.',
-    wrongConclusion2: 'No Squares are Quadrilaterals.',
-    wrongConclusion3: 'Some Quadrilaterals are not Rectangles.',
+    premise1: 'All Mammals are Warm-blooded.',
+    premise2: 'Dolphins are Mammals.',
+    question: 'Which conclusion is valid?',
+    correctConclusion: 'Dolphins are Warm-blooded.',
+    wrongConclusion1: 'Warm-blooded creatures are Dolphins.',
+    wrongConclusion2: 'Dolphins are Cold-blooded.',
+    wrongConclusion3: 'No Dolphins are Warm-blooded.',
   },
   {
     premise1: 'No Carnivores eat Leaves.',
@@ -104,8 +77,13 @@ const SYLLOGISM_POOL: SyllogismData[] = [
   },
 ];
 
-export function generateSyllogismPuzzle(difficulty: DifficultyTier, rng: SeededRandom): AptitudePuzzle {
-  const item = rng.pick(SYLLOGISM_POOL);
+export function generateSyllogismPuzzle(
+  difficulty: DifficultyTier,
+  rng: SeededRandom,
+  seenIds: string[] = []
+): AptitudePuzzle {
+  const available = SYLLOGISM_POOL.filter((s) => !seenIds.includes(`syl_${s.premise1.toLowerCase().replace(/\s+/g, '_')}`));
+  const item = available.length > 0 ? rng.pick(available) : rng.pick(SYLLOGISM_POOL);
 
   const rawOptions: Option[] = [
     { id: 'opt_c', content: item.correctConclusion, isCorrect: true },
@@ -114,7 +92,6 @@ export function generateSyllogismPuzzle(difficulty: DifficultyTier, rng: SeededR
     { id: 'opt_w3', content: item.wrongConclusion3, isCorrect: false },
   ];
 
-  // Guarantee 4 unique options
   const options: Option[] = [];
   const seen = new Set<string>();
 
@@ -125,30 +102,19 @@ export function generateSyllogismPuzzle(difficulty: DifficultyTier, rng: SeededR
     }
   }
 
-  // Fallback guard
-  const fallbackConclusions = [
-    'Cannot be determined from given premises.',
-    'None of the above conclusions follow.',
-    'All statement premises are contradictory.',
-  ];
-  let extra = 0;
-  while (options.length < 4 && extra < fallbackConclusions.length) {
-    if (!seen.has(fallbackConclusions[extra])) {
-      seen.add(fallbackConclusions[extra]);
-      options.push({ id: `opt_s_fb_${extra}`, content: fallbackConclusions[extra], isCorrect: false });
-    }
-    extra++;
-  }
-
   return {
-    id: `syll_${Date.now()}_${rng.range(100, 999)}`,
+    id: `syl_${item.premise1.toLowerCase().replace(/\s+/g, '_')}_${Date.now()}`,
     category: 'syllogism',
-    categoryTitle: 'Speed Syllogisms',
+    categoryTitle: 'Deductive Syllogisms',
     difficulty,
-    levelNumber: 5,
-    renderedData: item,
+    levelNumber: 1,
+    renderedData: {
+      premise1: item.premise1,
+      premise2: item.premise2,
+      questionText: item.question,
+    },
     options,
-    explanation: `Transit Rule: ${item.premise1} + ${item.premise2} implies "${item.correctConclusion}".`,
-    visualHint: `Map the sets: Premise 1 & 2 set containment.`,
+    explanation: `From "${item.premise1}" and "${item.premise2}", it logically follows that: "${item.correctConclusion}".`,
+    visualHint: 'Diagram the sets using Venn circles to verify set containment.',
   };
 }

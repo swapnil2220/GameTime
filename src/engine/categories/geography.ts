@@ -173,8 +173,14 @@ const COUNTRIES: CountryMapData[] = [
   },
 ];
 
-export function generateGeographyPuzzle(difficulty: DifficultyTier, rng: SeededRandom): AptitudePuzzle {
-  const country = rng.pick(COUNTRIES);
+export function generateGeographyPuzzle(
+  difficulty: DifficultyTier,
+  rng: SeededRandom,
+  seenIds: string[] = []
+): AptitudePuzzle {
+  const available = COUNTRIES.filter((c) => !seenIds.includes(`geo_${c.name.toLowerCase()}`));
+  const country = available.length > 0 ? rng.pick(available) : rng.pick(COUNTRIES);
+
   const questionType = rng.pick(['capital', 'map_identify', 'landmark']);
 
   let questionText = '';
@@ -199,7 +205,6 @@ export function generateGeographyPuzzle(difficulty: DifficultyTier, rng: SeededR
     hint = `This landmark is located in ${country.continent}.`;
   }
 
-  // Shuffle pool to pick 3 distractors
   const shuffledPool = rng.shuffle(distractorPool);
   const chosenDistractors: string[] = [];
 
@@ -217,7 +222,6 @@ export function generateGeographyPuzzle(difficulty: DifficultyTier, rng: SeededR
     rawOptions.push({ id: `opt_d_${i}`, content: d, isCorrect: false });
   });
 
-  // Guarantee exactly 4 unique options
   const uniqueOptions: Option[] = [];
   const seenContent = new Set<string>();
 
@@ -229,7 +233,6 @@ export function generateGeographyPuzzle(difficulty: DifficultyTier, rng: SeededR
     }
   }
 
-  // Fallback guard: fill remaining up to 4 if any deduplication removed a slot
   let extraIdx = 0;
   while (uniqueOptions.length < 4 && extraIdx < COUNTRIES.length) {
     const fallbackVal = questionType === 'capital' ? COUNTRIES[extraIdx].capital : COUNTRIES[extraIdx].name;
@@ -241,7 +244,7 @@ export function generateGeographyPuzzle(difficulty: DifficultyTier, rng: SeededR
   }
 
   return {
-    id: `geo_${Date.now()}_${rng.range(100, 999)}`,
+    id: `geo_${country.name.toLowerCase()}_${Date.now()}`,
     category: 'geography',
     categoryTitle: 'Geography & World Maps',
     difficulty,

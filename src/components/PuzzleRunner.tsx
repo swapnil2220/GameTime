@@ -36,6 +36,7 @@ export const PuzzleRunner: React.FC<PuzzleRunnerProps> = ({
     generateAptitudePuzzle(levelNumber, undefined, undefined, activeUser.seenQuestionIds || [])
   );
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
+  const [showHint, setShowHint] = useState(false);
   const [showExplanation, setShowExplanation] = useState(false);
   const [startTime, setStartTime] = useState<number>(Date.now());
   const [elapsedSec, setElapsedSec] = useState(0);
@@ -56,6 +57,7 @@ export const PuzzleRunner: React.FC<PuzzleRunnerProps> = ({
     recordSeenQuestion(activeUser.id, newPuzzle.id);
 
     setSelectedOptionId(null);
+    setShowHint(false);
     setShowExplanation(false);
     const now = Date.now();
     setStartTime(now);
@@ -124,18 +126,53 @@ export const PuzzleRunner: React.FC<PuzzleRunnerProps> = ({
   }
 
   const renderCategoryBody = () => {
+    if (!puzzle.renderedData) {
+      return (
+        <div className="text-center font-mono font-black text-base text-cyan-300 my-4">
+          Select the logically correct answer below:
+        </div>
+      );
+    }
+
     switch (puzzle.category) {
       case 'geography':
         return (
           <GeographyView
-            country={puzzle.renderedData.country}
-            questionText={puzzle.renderedData.questionText}
+            country={
+              puzzle.renderedData.country || {
+                name: 'World Geography',
+                capital: 'Capital',
+                landmark: 'Landmark',
+                continent: 'World',
+                triviaFact: '',
+                svgShapeKey: 'japan',
+              }
+            }
+            questionText={puzzle.renderedData.questionText || 'Which country or capital is described below?'}
           />
         );
       case 'sports':
-        return <SportsView data={puzzle.renderedData} />;
+        return (
+          <SportsView
+            data={
+              puzzle.renderedData.questionText
+                ? puzzle.renderedData
+                : {
+                    sportName: 'Sports Arena',
+                    questionText: 'Identify the correct sports rule or terminology below:',
+                    icon: '🏆',
+                    correctAnswer: '',
+                    distractors: [],
+                    explanation: '',
+                    triviaFact: '',
+                  }
+            }
+          />
+        );
       case 'analogy': {
-        const { shapeA, shapeB, shapeC } = puzzle.renderedData;
+        const shapeA = puzzle.renderedData.shapeA || null;
+        const shapeB = puzzle.renderedData.shapeB || null;
+        const shapeC = puzzle.renderedData.shapeC || null;
         return (
           <div className="flex items-center justify-center gap-3 my-4 font-sans">
             <AnalogyShapeSVG shape={shapeA} label="SHAPE A" />
@@ -151,15 +188,15 @@ export const PuzzleRunner: React.FC<PuzzleRunnerProps> = ({
       case 'cipher':
         return (
           <CipherView
-            exampleWord={puzzle.renderedData.exampleWord}
-            exampleCode={puzzle.renderedData.exampleCode}
-            targetWord={puzzle.renderedData.targetWord}
+            exampleWord={puzzle.renderedData.exampleWord || 'CODE'}
+            exampleCode={puzzle.renderedData.exampleCode || 'DPEF'}
+            targetWord={puzzle.renderedData.targetWord || 'MIND'}
           />
         );
       case 'venn':
         return <VennView data={puzzle.renderedData} />;
       case 'series':
-        return <SeriesView sequence={puzzle.renderedData.sequence} />;
+        return <SeriesView sequence={puzzle.renderedData.sequence || ['2', '4', '8', '16', '?']} />;
       case 'syllogism':
         return <SyllogismView data={puzzle.renderedData} />;
       case 'science':
@@ -167,7 +204,13 @@ export const PuzzleRunner: React.FC<PuzzleRunnerProps> = ({
       case 'verbal_analogy':
         return <VerbalAnalogyView data={puzzle.renderedData} />;
       case 'math_logic':
-        return <MathLogicView equationText={puzzle.renderedData.equationText} />;
+        return <MathLogicView equationText={puzzle.renderedData.equationText || 'Solve for X'} />;
+      default:
+        return (
+          <div className="text-center font-mono font-black text-base text-cyan-300 my-4">
+            Select the logically correct answer below:
+          </div>
+        );
     }
   };
 
@@ -212,6 +255,29 @@ export const PuzzleRunner: React.FC<PuzzleRunnerProps> = ({
       {/* Main Puzzle Area */}
       <div className="w-full p-8 rounded-3xl bg-slate-950/80 border border-slate-800 backdrop-blur-2xl shadow-2xl flex flex-col items-center">
         <div className="w-full flex justify-center py-2">{renderCategoryBody()}</div>
+
+        {/* Hint Toggle Button */}
+        {puzzle.visualHint && (
+          <div className="w-full flex justify-center mt-2 mb-2">
+            <button
+              onClick={() => {
+                setShowHint((prev) => !prev);
+                sound.playClick();
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-950/60 border border-amber-500/40 text-amber-300 text-xs font-mono font-bold hover:bg-amber-900/80 transition-all shadow-[0_0_12px_rgba(245,158,11,0.2)]"
+            >
+              <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
+              {showHint ? 'HIDE VISUAL HINT' : 'SHOW VISUAL HINT'}
+            </button>
+          </div>
+        )}
+
+        {/* Visual Hint Drawer */}
+        {showHint && puzzle.visualHint && (
+          <div className="w-full p-3 rounded-xl bg-amber-950/40 border border-amber-500/40 text-xs font-mono text-amber-200 text-center mb-3 animate-fadeIn">
+            💡 {puzzle.visualHint}
+          </div>
+        )}
 
         {/* Nexus AI Persona Companion */}
         <NexusAIPersona puzzle={puzzle} personaType={activeUser.preferredPersona} />

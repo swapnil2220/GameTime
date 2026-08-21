@@ -6,6 +6,7 @@ interface ResultModalProps {
   score: number;
   timeSec: number;
   levelNumber: number;
+  isConnectionsMode?: boolean;
   onNextLevel: () => void;
   onRetryLevel: () => void;
   onBackToMap: () => void;
@@ -16,6 +17,7 @@ export const ResultModal: React.FC<ResultModalProps> = ({
   score,
   timeSec,
   levelNumber,
+  isConnectionsMode = false,
   onNextLevel,
   onRetryLevel,
   onBackToMap,
@@ -30,9 +32,19 @@ export const ResultModal: React.FC<ResultModalProps> = ({
         </div>
 
         <h2 className="text-3xl font-black font-mono tracking-wider bg-gradient-to-r from-cyan-400 via-purple-300 to-pink-400 bg-clip-text text-transparent mb-1">
-          {stars > 0 ? 'STAGE CLEARED!' : 'TRY AGAIN'}
+          {isConnectionsMode
+            ? stars > 0
+              ? 'PUZZLE SOLVED!'
+              : 'TRY AGAIN'
+            : stars > 0
+            ? 'STAGE CLEARED!'
+            : 'TRY AGAIN'}
         </h2>
-        <p className="text-xs font-mono text-slate-400 mb-6">STAGE {levelNumber} PERFORMANCE REPORT</p>
+        <p className="text-xs font-mono text-slate-400 mb-6">
+          {isConnectionsMode
+            ? 'AI CONNECTIONS QUIZ PERFORMANCE REPORT'
+            : `STAGE ${levelNumber} PERFORMANCE REPORT`}
+        </p>
 
         {/* Stars Banner */}
         <div className="flex items-center gap-3 mb-8">
@@ -63,7 +75,7 @@ export const ResultModal: React.FC<ResultModalProps> = ({
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 w-full">
-          {stars > 0 && levelNumber < 30 && (
+          {!isConnectionsMode && stars > 0 && levelNumber < 30 && (
             <button
               onClick={onNextLevel}
               className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl bg-gradient-to-r from-cyan-500 via-indigo-600 to-purple-600 font-mono font-extrabold text-white text-sm shadow-[0_0_25px_rgba(0,243,255,0.4)] hover:scale-102 transition-all"
@@ -76,7 +88,7 @@ export const ResultModal: React.FC<ResultModalProps> = ({
             onClick={onRetryLevel}
             className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl bg-slate-900 border border-slate-700 font-mono font-extrabold text-slate-200 text-sm hover:border-cyan-400 transition-all"
           >
-            <RotateCcw className="w-4 h-4" /> RETRY STAGE
+            <RotateCcw className="w-4 h-4" /> {isConnectionsMode ? 'RETRY PUZZLE' : 'RETRY STAGE'}
           </button>
 
           <button

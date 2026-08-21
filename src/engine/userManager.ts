@@ -47,12 +47,6 @@ function sanitizeUser(user: any): UserProfile {
   if (typeof user.blitzHighScore !== 'number') {
     user.blitzHighScore = 0;
   }
-  if (typeof user.kbcHighPrize !== 'number') {
-    user.kbcHighPrize = 0;
-  }
-  if (typeof user.kbcPerfectRuns !== 'number') {
-    user.kbcPerfectRuns = 0;
-  }
   if (!user.seenQuestionIds) {
     user.seenQuestionIds = [];
   }
@@ -106,8 +100,6 @@ export function getActiveUser(): UserProfile {
     seenQuestionIds: [],
     mindMatrix: createDefaultMindMatrix(),
     blitzHighScore: 0,
-    kbcHighPrize: 0,
-    kbcPerfectRuns: 0,
     levelProgress: createDefaultLevels(),
     createdAt: new Date().toISOString(),
   };
@@ -122,8 +114,6 @@ export function checkAndUpdateDailyStreak(user: UserProfile): UserProfile {
   const today = getTodayString();
   if (!user.seenQuestionIds) user.seenQuestionIds = [];
   if (!user.mindMatrix) user.mindMatrix = createDefaultMindMatrix();
-  if (typeof user.kbcHighPrize !== 'number') user.kbcHighPrize = 0;
-  if (typeof user.kbcPerfectRuns !== 'number') user.kbcPerfectRuns = 0;
 
   if (user.lastPlayedDate === today) return user;
 
@@ -167,8 +157,6 @@ export function switchOrRegisterUser(usernameInput: string, avatar: string, isGu
       seenQuestionIds: [],
       mindMatrix: createDefaultMindMatrix(),
       blitzHighScore: 0,
-      kbcHighPrize: 0,
-      kbcPerfectRuns: 0,
       levelProgress: createDefaultLevels(),
       createdAt: new Date().toISOString(),
     };
@@ -194,8 +182,6 @@ export function resetUserProgress(userId: string): UserProfile {
     user.seenQuestionIds = [];
     user.mindMatrix = createDefaultMindMatrix();
     user.blitzHighScore = 0;
-    user.kbcHighPrize = 0;
-    user.kbcPerfectRuns = 0;
     saveAllUsers(users);
     return user;
   }
@@ -242,23 +228,18 @@ export function updateMindMatrixRating(
   switch (category) {
     case 'series':
     case 'analogy':
-    case 'lateral_thinking':
       user.mindMatrix.patternRecognition = Math.min(100, Math.max(10, user.mindMatrix.patternRecognition + delta));
       break;
     case 'venn':
     case 'geography':
-    case 'inventions_discovery':
       user.mindMatrix.spatialReasoning = Math.min(100, Math.max(10, user.mindMatrix.spatialReasoning + delta));
       break;
     case 'verbal_analogy':
     case 'cipher':
-    case 'word_origins':
-    case 'cinema_pop':
       user.mindMatrix.verbalFluency = Math.min(100, Math.max(10, user.mindMatrix.verbalFluency + delta));
       break;
     case 'syllogism':
     case 'connections':
-    case 'mythos_history':
       user.mindMatrix.deductiveLogic = Math.min(100, Math.max(10, user.mindMatrix.deductiveLogic + delta));
       break;
     case 'math_logic':
@@ -287,17 +268,12 @@ export function updateBlitzResult(userId: string, blitz: BlitzResult): UserProfi
   return checkAndUpdateDailyStreak(user);
 }
 
-export function updateKBCResult(userId: string, prizePts: number, isCrorepati: boolean): UserProfile {
+export function updateNonCampaignScore(userId: string, score: number): UserProfile {
   const users = getAllUsers();
   const user = users.find((u) => u.id === userId);
   if (!user) return getActiveUser();
 
-  user.kbcHighPrize = Math.max(user.kbcHighPrize || 0, prizePts);
-  if (isCrorepati) {
-    user.kbcPerfectRuns = (user.kbcPerfectRuns || 0) + 1;
-  }
-  user.totalScore += Math.floor(prizePts / 10);
-
+  user.totalScore += score;
   saveAllUsers(users);
   return checkAndUpdateDailyStreak(user);
 }
@@ -327,7 +303,7 @@ export function updateUserLevelProgress(
   }
 
   const campaignScore = user.levelProgress.reduce((acc, l) => acc + l.bestScore, 0);
-  user.totalScore = campaignScore + (user.blitzHighScore || 0) + Math.floor((user.kbcHighPrize || 0) / 10);
+  user.totalScore = campaignScore + (user.blitzHighScore || 0);
   user.totalStars = user.levelProgress.reduce((acc, l) => acc + l.stars, 0);
 
   saveAllUsers(users);

@@ -1,24 +1,61 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { getAllUsers } from '../engine/userManager';
-import { Trophy, Star, RotateCcw } from 'lucide-react';
+import type { UserProfile } from '../types/game';
+import { Trophy, Star, RotateCcw, RefreshCw } from 'lucide-react';
 
 interface LeaderboardProps {
   onBackToMenu: () => void;
 }
 
 export const Leaderboard: React.FC<LeaderboardProps> = ({ onBackToMenu }) => {
-  const users = getAllUsers().sort((a, b) => b.totalScore - a.totalScore);
+  const [users, setUsers] = useState<UserProfile[]>(() =>
+    getAllUsers().sort((a, b) => b.totalScore - a.totalScore)
+  );
+
+  const refreshLeaderboard = () => {
+    const fresh = getAllUsers().sort((a, b) => b.totalScore - a.totalScore);
+    setUsers(fresh);
+  };
+
+  useEffect(() => {
+    refreshLeaderboard();
+
+    const handleStorageChange = () => {
+      refreshLeaderboard();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    const interval = setInterval(refreshLeaderboard, 1500);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
 
   return (
-    <div className="relative z-20 w-full max-w-3xl mx-auto px-4 py-8">
+    <div className="relative z-20 w-full max-w-3xl mx-auto px-4 py-8 font-sans">
       <div className="p-8 rounded-3xl bg-slate-950/90 border border-slate-800 backdrop-blur-2xl shadow-2xl flex flex-col items-center">
-        <div className="flex items-center gap-3 mb-2">
-          <Trophy className="w-8 h-8 text-amber-400" />
-          <h2 className="text-3xl font-black font-mono tracking-wider bg-gradient-to-r from-amber-400 via-orange-300 to-pink-400 bg-clip-text text-transparent">
-            NEXUS LEADERBOARD
-          </h2>
+        <div className="flex items-center justify-between w-full mb-2">
+          <div className="flex items-center gap-3">
+            <Trophy className="w-8 h-8 text-amber-400" />
+            <h2 className="text-3xl font-black font-mono tracking-wider bg-gradient-to-r from-amber-400 via-orange-300 to-pink-400 bg-clip-text text-transparent">
+              NEXUS LEADERBOARD
+            </h2>
+          </div>
+
+          <button
+            onClick={refreshLeaderboard}
+            className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-cyan-300 transition-colors"
+            title="Refresh Scores"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
         </div>
-        <p className="text-xs font-mono text-slate-400 mb-8">GLOBAL OPERATOR RANKING & SCORES</p>
+
+        <p className="text-xs font-mono text-slate-400 mb-8 self-start">
+          REAL-TIME GLOBAL OPERATOR RANKING & SCORES
+        </p>
 
         <div className="w-full flex flex-col gap-3 mb-8">
           {users.map((entry, idx) => {
